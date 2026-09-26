@@ -122,13 +122,19 @@ export default function LightningHero() {
       seg(mx, my, x2, y2, d / 2, dep, o);
       if (dep < 2 && Math.random() < 0.07) seg(mx, my, mx + rnd(-1, 1) * H * 0.18, my + rnd(0.05, 0.25) * H, d / 2, dep + 1, o);
     }
-    function strike(x: number, y: number, big?: boolean) {
+
+    let introBolt: number[][] = [];
+    function strike(x: number, y: number, big?: boolean, isIntro = false) {
       bolts = [];
-      seg(x, -10, x, y, H * 0.16, 0, bolts); // Force straight down the absolute center X coordinate
+      seg(x, -10, x, y, H * 0.16, 0, bolts);
+      if (isIntro) {
+        introBolt = [...bolts];
+      }
       hit = { x, y };
       strikeAt = performance.now() / 1000;
-      boltScale = big ? 2.0 : 1; // Slightly punchier scale for the grand opening strike
+      boltScale = big ? 2.0 : 1;
     }
+
     function drawBolt(a: number) {
       F.lineCap = "round";
       F.lineJoin = "round";
@@ -175,6 +181,7 @@ export default function LightningHero() {
     function finish() {
       introDone = true;
       open = 1;
+      cl.style.clipPath = cr.style.clipPath = "none";
       cl.style.display = cr.style.display = "none";
       stage.classList.remove("opacity-0");
       stage.classList.add("opacity-100");
@@ -192,8 +199,7 @@ export default function LightningHero() {
       did = [false, false],
       nextAmb = 0,
       lastR = 0;
-    
-    // Tighter sequence: lightning splits the center, and the curtains immediately rip open along it
+
     const STRIKE_T = 0.35,
       OPEN_START = 0.45,
       OPEN_DUR = 1.8;
@@ -214,14 +220,32 @@ export default function LightningHero() {
       if (fxEnabled && !introDone) {
         if (!did[0] && t > STRIKE_T) {
           did[0] = true;
-          strike(W / 2, H, true); // Strike goes all the way down the center line to the bottom
+          strike(W / 2, H, true, true);
         }
         p = Math.min(1, Math.max(0, (t - OPEN_START) / OPEN_DUR));
         open = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-        
-        // Curtains part precisely from the center line where the lightning struck
-        cl.style.transform = `translateX(${-open * 100}%)`;
-        cr.style.transform = `translateX(${open * 100}%)`;
+
+        // Apply dynamic jagged polygon clip paths based on the strike geometry
+        if (introBolt.length > 0 && W > 0 && H > 0) {
+          let leftPoints = `0 0, 0 ${H}`;
+          let rightPoints = `${W} 0, ${W} ${H}`;
+
+          // Build precise polygon coordinates tracing the jagged path of the lightning
+          for (const s of introBolt) {
+            const xMid = s[2];
+            const yMid = s[3];
+            leftPoints += `, ${xMid} ${yMid}`;
+            rightPoints += `, ${xMid} ${yMid}`;
+          }
+
+          // Shift panels outward along the jagged boundary
+          const xShift = open * W * 0.5;
+          cl.style.transform = `translateX(${-xShift}px)`;
+          cr.style.transform = `translateX(${xShift}px)`;
+        } else {
+          cl.style.transform = `translateX(${-open * 100}%)`;
+          cr.style.transform = `translateX(${open * 100}%)`;
+        }
 
         if (p >= 1 && !did[1]) {
           did[1] = true;
@@ -254,7 +278,6 @@ export default function LightningHero() {
         F.fillRect(0, 0, W, H);
       }
 
-      // Live electric arcs trace the exact seam edges as the curtains pull apart
       if (fxEnabled && !introDone && t > OPEN_START && p < 1) {
         if (now - lastR > 0.11) {
           regen();
