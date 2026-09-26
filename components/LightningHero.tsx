@@ -196,38 +196,43 @@ export default function LightningHero() {
         }
       }
     }
-    function arc(x: number, a: number, k: number) {
+    function arc(x: number, a: number, k: number, t: number) {
       const o = ao[k];
       F.lineCap = "round";
       // fast brightness flicker on top of the slow drift already baked into ao
       const flicker = 0.7 + Math.random() * 0.6;
-      const passes = [
-        [10, "110,150,255", 0.12],
-        [3.2, "170,205,255", 0.45],
-        [1.1, "255,255,255", 0.95],
+      // core strand follows ao directly; the other two coil around it via a
+      // sine twist 120deg out of phase from each other, so all three weave
+      // together as t advances instead of just sitting side by side
+      const strands = [
+        { amp: 0, phase: 0, alphaMul: 1, glowW: 9, midW: 3, coreW: 1.2, glowC: "110,150,255", midC: "170,205,255", coreC: "255,255,255" },
+        { amp: 7, phase: (Math.PI * 2) / 3, alphaMul: 0.65, glowW: 6, midW: 2, coreW: 0.9, glowC: "110,150,255", midC: "150,190,255", coreC: "205,225,255" },
+        { amp: 7, phase: (Math.PI * 4) / 3, alphaMul: 0.65, glowW: 6, midW: 2, coreW: 0.9, glowC: "140,120,255", midC: "190,170,255", coreC: "230,215,255" },
       ] as const;
-      // two overlapping, independently jittered strands so the arc shimmers
-      // instead of reading as one static line
-      for (let strand = 0; strand < 2; strand++) {
-        const strandAlpha = strand === 0 ? 1 : 0.45;
-        const jitterAmt = strand === 0 ? 3 : 5;
-        for (const [w, c, al] of passes) {
-          F.strokeStyle = `rgba(${c},${(al * a * flicker * strandAlpha).toFixed(3)})`;
-          F.lineWidth = (w as number) * (strand === 0 ? 1 : 0.8);
+      const twistSpeed = 2.4;
+      let corePts: { x: number; y: number }[] = [];
+      strands.forEach((s, si) => {
+        const pts = o.map((v, i) => ({
+          x: x + v + s.amp * Math.sin(i * 0.55 + t * twistSpeed + s.phase) + (Math.random() - 0.5) * 2.4,
+          y: i * 12,
+        }));
+        if (si === 0) corePts = pts;
+        for (const [w, c, al] of [
+          [s.glowW, s.glowC, 0.12],
+          [s.midW, s.midC, 0.45],
+          [s.coreW, s.coreC, 0.9],
+        ] as const) {
+          F.strokeStyle = `rgba(${c},${(al * a * flicker * s.alphaMul).toFixed(3)})`;
+          F.lineWidth = w as number;
           F.beginPath();
-          o.forEach((v, i) => {
-            const jx = x + v + (Math.random() - 0.5) * jitterAmt;
-            const jy = i * 12;
-            i ? F.lineTo(jx, jy) : F.moveTo(jx, jy);
-          });
+          pts.forEach((p, i) => (i ? F.lineTo(p.x, p.y) : F.moveTo(p.x, p.y)));
           F.stroke();
         }
-      }
-      // occasional short spark fork, spat off the main strand and gone next frame
-      if (Math.random() < 0.35 && o.length > 2) {
-        const i = 1 + ((Math.random() * (o.length - 2)) | 0);
-        const bx = x + o[i],
-          by = i * 12;
+      });
+      // occasional short spark fork off the core strand, gone next frame
+      if (Math.random() < 0.35 && corePts.length > 2) {
+        const i = 1 + ((Math.random() * (corePts.length - 2)) | 0);
+        const { x: bx, y: by } = corePts[i];
         const ang = Math.random() * Math.PI * 2;
         const len = 6 + Math.random() * 14;
         F.strokeStyle = `rgba(200,225,255,${(0.5 * a * flicker).toFixed(3)})`;
@@ -315,8 +320,8 @@ export default function LightningHero() {
           lastR = now;
         }
         const a = Math.min(1, (t - OPEN_START) / 0.8) * (1 - Math.max(0, (p - 0.7) / 0.3));
-        arc(W / 2 - open * (W / 2), a, 0);
-        arc(W / 2 + open * (W / 2), a, 1);
+        arc(W / 2 - open * (W / 2), a, 0, now);
+        arc(W / 2 + open * (W / 2), a, 1, now);
       }
       F.globalCompositeOperation = "source-over";
       hero.style.setProperty("--f", flash.toFixed(2));
