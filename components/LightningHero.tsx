@@ -225,23 +225,30 @@ export default function LightningHero() {
         p = Math.min(1, Math.max(0, (t - OPEN_START) / OPEN_DUR));
         open = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
 
-        // Apply dynamic jagged polygon clip paths based on the strike geometry
         if (introBolt.length > 0 && W > 0 && H > 0) {
-          let leftPoints = `0 0, 0 ${H}`;
-          let rightPoints = `${W} 0, ${W} ${H}`;
+          // Sort unique points top-to-bottom along the Y axis to build a clean tearing seam
+          const pts = introBolt.map(s => [s[2], s[3]] as [number, number]).sort((a, b) => a[1] - b[1]);
+          
+          let leftSeam = `0 0`;
+          let rightSeam = `${W} 0`;
 
-          // Build precise polygon coordinates tracing the jagged path of the lightning
-          for (const s of introBolt) {
-            const xMid = s[2];
-            const yMid = s[3];
-            leftPoints += `, ${xMid} ${yMid}`;
-            rightPoints += `, ${xMid} ${yMid}`;
+          // Construct the jagged polygon coordinates tracing the exact lightning nodes
+          for (const [px, py] of pts) {
+            leftSeam += `, ${px} ${py}`;
+            rightSeam += `, ${px} ${py}`;
           }
 
-          // Shift panels outward along the jagged boundary
-          const xShift = open * W * 0.5;
-          cl.style.transform = `translateX(${-xShift}px)`;
-          cr.style.transform = `translateX(${xShift}px)`;
+          leftSeam += `, 0 ${H}`;
+          rightSeam += `, ${W} ${H}`;
+
+          // Apply the jagged clip path to shape the curtains to the lightning bolt's crack
+          cl.style.clipPath = `polygon(${leftSeam})`;
+          cr.style.clipPath = `polygon(${rightSeam})`;
+
+          // Slide panels outward horizontally while maintaining the jagged seam edge
+          const xOffset = open * (W * 0.55);
+          cl.style.transform = `translateX(${-xOffset}px)`;
+          cr.style.transform = `translateX(${xOffset}px)`;
         } else {
           cl.style.transform = `translateX(${-open * 100}%)`;
           cr.style.transform = `translateX(${open * 100}%)`;
@@ -418,8 +425,8 @@ export default function LightningHero() {
           </div>
         </div>
       </div>
-      <div ref={clRef} className="absolute inset-y-0 left-0 z-[4] w-[50.2%] bg-[#030509]" aria-hidden />
-      <div ref={crRef} className="absolute inset-y-0 right-0 z-[4] w-[50.2%] bg-[#030509]" aria-hidden />
+      <div ref={clRef} className="absolute inset-y-0 left-0 z-[4] w-full bg-[#030509]" aria-hidden />
+      <div ref={crRef} className="absolute inset-y-0 right-0 z-[4] w-full bg-[#030509]" aria-hidden />
       <canvas ref={fxRef} className="pointer-events-none absolute inset-0 z-[5] block h-full w-full" aria-hidden />
     </header>
   );
