@@ -223,7 +223,7 @@ export default function LightningHero() {
         }
       } else if (fxEnabled && now > nextAmb) {
         strike(W * rnd(0.12, 0.88), H * rnd(0.7, 0.82));
-        nextAmb = now + rnd(9, 15);
+        nextAmb = now + rnd(6, 9);
       }
       const st = now - strikeAt;
       flash = 0.55 * (st < 0 ? 0 : st < 0.07 ? st / 0.07 : Math.exp(-(st - 0.07) * 3.2));
