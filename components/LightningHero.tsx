@@ -128,28 +128,46 @@ export default function LightningHero() {
       hit = { x, y };
       strikeAt = performance.now() / 1000;
       boltScale = big ? 1.7 : 1;
-
-      // Update clip paths dynamically based on the main bolt path for the jagged split effect
-      if (bolts.length > 0 && cl && cr) {
-        let leftPoints = "0% 0%, ";
-        let rightPoints = "100% 0%, ";
-        
-        // Build polygon coordinates along the bolt segments
-        bolts.forEach((s) => {
-          const xPercent = Math.max(0, Math.min(100, (s[2] / W) * 100));
-          const yPercent = Math.max(0, Math.min(100, (s[3] / H) * 100));
-          leftPoints += `${xPercent}% ${yPercent}%, `;
-          rightPoints += `${xPercent}% ${yPercent}%, `;
-        });
-
-        leftPoints += "0% 100%";
-        rightPoints += "100% 100%";
-
-        cl.style.clipPath = `polygon(${leftPoints})`;
-        cr.style.clipPath = `polygon(${rightPoints})`;
-      }
     }
-
+    // Trace only the main trunk of the bolt (dep === 0, ignoring side-branches)
+    // into a top-to-bottom polyline, extended straight down to the floor of
+    // the hero so it spans the full curtain height.
+    function boltSpine() {
+      const trunk = bolts.filter((s) => s[4] === 0);
+      const pts: { x: number; y: number }[] = [];
+      for (const s of trunk) {
+        pts.push({ x: s[0], y: Math.max(0, s[1]) });
+        pts.push({ x: s[2], y: Math.max(0, s[3]) });
+      }
+      pts.sort((a, b) => a.y - b.y);
+      const spine: { x: number; y: number }[] = [];
+      for (const p of pts) {
+        const last = spine[spine.length - 1];
+        if (!last || p.y - last.y > 0.5) spine.push(p);
+      }
+      if (!spine.length) return [{ x: W / 2, y: 0 }, { x: W / 2, y: H }];
+      if (spine[0].y > 0) spine.unshift({ x: spine[0].x, y: 0 });
+      spine.push({ x: spine[spine.length - 1].x, y: H });
+      return spine;
+    }
+    // Clip the two curtain panels so their facing edge follows the bolt's
+    // path instead of a straight vertical line. The curtains keep sliding
+    // apart exactly as before; only the shape of the torn edge changes.
+    function clipCurtainsToBolt() {
+      const spine = boltSpine();
+      const panelL = W * 0.502;
+      const panelR = W * 0.502;
+      const rightStart = W - panelR;
+      const pct = (n: number) => Math.max(0, Math.min(100, n)).toFixed(2);
+      const leftPts = spine.map((p) => `${pct((p.x / panelL) * 100)}% ${pct((p.y / H) * 100)}%`);
+      const rightPts = spine.map((p) => `${pct(((p.x - rightStart) / panelR) * 100)}% ${pct((p.y / H) * 100)}%`);
+      const leftPoly = `polygon(0% 0%, ${leftPts.join(", ")}, 0% 100%)`;
+      const rightPoly = `polygon(${rightPts.join(", ")}, 100% 100%, 100% 0%)`;
+      cl.style.clipPath = leftPoly;
+      cr.style.clipPath = rightPoly;
+      (cl.style as any).webkitClipPath = leftPoly;
+      (cr.style as any).webkitClipPath = rightPoly;
+    }
     function drawBolt(a: number) {
       F.lineCap = "round";
       F.lineJoin = "round";
@@ -232,6 +250,7 @@ export default function LightningHero() {
         if (!did[0] && t > STRIKE_T) {
           did[0] = true;
           strike(W / 2, H * 0.5, true);
+          clipCurtainsToBolt();
         }
         p = Math.min(1, Math.max(0, (t - OPEN_START) / OPEN_DUR));
         open = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
