@@ -199,15 +199,42 @@ export default function LightningHero() {
     function arc(x: number, a: number, k: number) {
       const o = ao[k];
       F.lineCap = "round";
-      for (const [w, c, al] of [
-        [9, "110,150,255", 0.14],
-        [3, "170,200,255", 0.5],
-        [1.2, "255,255,255", 0.9],
-      ] as const) {
-        F.strokeStyle = `rgba(${c},${al * a})`;
-        F.lineWidth = w as number;
+      // fast brightness flicker on top of the slow drift already baked into ao
+      const flicker = 0.7 + Math.random() * 0.6;
+      const passes = [
+        [10, "110,150,255", 0.12],
+        [3.2, "170,205,255", 0.45],
+        [1.1, "255,255,255", 0.95],
+      ] as const;
+      // two overlapping, independently jittered strands so the arc shimmers
+      // instead of reading as one static line
+      for (let strand = 0; strand < 2; strand++) {
+        const strandAlpha = strand === 0 ? 1 : 0.45;
+        const jitterAmt = strand === 0 ? 3 : 5;
+        for (const [w, c, al] of passes) {
+          F.strokeStyle = `rgba(${c},${(al * a * flicker * strandAlpha).toFixed(3)})`;
+          F.lineWidth = (w as number) * (strand === 0 ? 1 : 0.8);
+          F.beginPath();
+          o.forEach((v, i) => {
+            const jx = x + v + (Math.random() - 0.5) * jitterAmt;
+            const jy = i * 12;
+            i ? F.lineTo(jx, jy) : F.moveTo(jx, jy);
+          });
+          F.stroke();
+        }
+      }
+      // occasional short spark fork, spat off the main strand and gone next frame
+      if (Math.random() < 0.35 && o.length > 2) {
+        const i = 1 + ((Math.random() * (o.length - 2)) | 0);
+        const bx = x + o[i],
+          by = i * 12;
+        const ang = Math.random() * Math.PI * 2;
+        const len = 6 + Math.random() * 14;
+        F.strokeStyle = `rgba(200,225,255,${(0.5 * a * flicker).toFixed(3)})`;
+        F.lineWidth = 1;
         F.beginPath();
-        o.forEach((v, i) => (i ? F.lineTo(x + v, i * 12) : F.moveTo(x + v, 0)));
+        F.moveTo(bx, by);
+        F.lineTo(bx + Math.cos(ang) * len, by + Math.sin(ang) * len);
         F.stroke();
       }
     }
@@ -249,7 +276,7 @@ export default function LightningHero() {
       if (fxEnabled && !introDone) {
         if (!did[0] && t > STRIKE_T) {
           did[0] = true;
-          strike(W / 2, H * 0.5, true);
+          strike(W / 2, H, true);
           clipCurtainsToBolt();
         }
         p = Math.min(1, Math.max(0, (t - OPEN_START) / OPEN_DUR));
