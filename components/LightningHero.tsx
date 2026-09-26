@@ -35,6 +35,11 @@ export default function LightningHero() {
       visible = true,
       boltScale = 1;
     let seam: { x: number; y: number }[] = [];
+    let jitter: number[] = [];
+    const regenJitter = () => {
+      let v = 0;
+      jitter = seam.map(() => (v = v * 0.5 + rnd(-4, 4)));
+    };
     const RGB = "120,160,255";
     const rnd = (a: number, b: number) => a + Math.random() * (b - a);
     const rng = (s: number) => () => (s = (s * 16807) % 2147483647) / 2147483647;
@@ -96,6 +101,7 @@ export default function LightningHero() {
       };
       walk(W / 2, 0, W / 2, H, W * 0.1);
       seam = pts;
+      regenJitter();
     }
     function size() {
       DPR = Math.min(devicePixelRatio || 1, 1.5);
@@ -163,7 +169,7 @@ export default function LightningHero() {
         }
       }
     }
-    function drawCurtain(openAmt: number, edgeAlpha: number) {
+    function drawCurtain(openAmt: number, edgeAlpha: number, flicker: number) {
       CV.clearRect(0, 0, W, H);
       if (openAmt >= 1 || !seam.length) return;
       CV.fillStyle = "#030509";
@@ -172,7 +178,8 @@ export default function LightningHero() {
         CV.moveTo(side < 0 ? 0 : W, 0);
         CV.lineTo(side < 0 ? 0 : W, H);
         for (let i = seam.length - 1; i >= 0; i--) {
-          CV.lineTo(seam[i].x + side * openAmt * W, seam[i].y);
+          const jx = (jitter[i] || 0) * flicker * 0.5;
+          CV.lineTo(seam[i].x + jx + side * openAmt * W, seam[i].y);
         }
         CV.closePath();
         CV.fill();
@@ -182,15 +189,16 @@ export default function LightningHero() {
         CV.lineJoin = "round";
         for (const side of [-1, 1] as const) {
           for (const [w, c, al] of [
-            [7, "110,150,255", 0.18],
-            [2.4, "180,205,255", 0.6],
-            [1, "255,255,255", 0.95],
+            [8, "110,150,255", 0.16],
+            [3, "170,200,255", 0.55],
+            [1.2, "255,255,255", 0.95],
           ] as const) {
             CV.strokeStyle = `rgba(${c},${(al as number) * edgeAlpha})`;
             CV.lineWidth = w as number;
             CV.beginPath();
             seam.forEach((p, i) => {
-              const x = p.x + side * openAmt * W;
+              const jx = (jitter[i] || 0) * flicker;
+              const x = p.x + jx + side * openAmt * W;
               if (i) CV.lineTo(x, p.y);
               else CV.moveTo(x, p.y);
             });
@@ -216,7 +224,8 @@ export default function LightningHero() {
     size();
     let t0 = performance.now() / 1000,
       did = [false, false],
-      nextAmb = 0;
+      nextAmb = 0,
+      lastJitter = 0;
     const STRIKE_T = 0.6,
       HOLD = 1.0,
       OPEN_START = STRIKE_T + HOLD + 0.15,
@@ -247,7 +256,12 @@ export default function LightningHero() {
         p = Math.min(1, Math.max(0, (t - OPEN_START) / OPEN_DUR));
         open = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
         const edgeA = t > OPEN_START ? Math.min(1, (t - OPEN_START) / 0.5) : 0;
-        drawCurtain(open, edgeA * (1 - Math.max(0, (p - 0.8) / 0.2)));
+        if (t > OPEN_START - 0.3 && now - lastJitter > 0.09) {
+          regenJitter();
+          lastJitter = now;
+        }
+        const flicker = t > OPEN_START - 0.3 ? Math.min(1, (t - (OPEN_START - 0.3)) / 0.3) : 0;
+        drawCurtain(open, edgeA * (1 - Math.max(0, (p - 0.8) / 0.2)), flicker);
         if (p >= 1 && !did[1]) {
           did[1] = true;
           finish();
