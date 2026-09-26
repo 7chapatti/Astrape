@@ -128,7 +128,28 @@ export default function LightningHero() {
       hit = { x, y };
       strikeAt = performance.now() / 1000;
       boltScale = big ? 1.7 : 1;
+
+      // Update clip paths dynamically based on the main bolt path for the jagged split effect
+      if (bolts.length > 0 && cl && cr) {
+        let leftPoints = "0% 0%, ";
+        let rightPoints = "100% 0%, ";
+        
+        // Build polygon coordinates along the bolt segments
+        bolts.forEach((s) => {
+          const xPercent = Math.max(0, Math.min(100, (s[2] / W) * 100));
+          const yPercent = Math.max(0, Math.min(100, (s[3] / H) * 100));
+          leftPoints += `${xPercent}% ${yPercent}%, `;
+          rightPoints += `${xPercent}% ${yPercent}%, `;
+        });
+
+        leftPoints += "0% 100%";
+        rightPoints += "100% 100%";
+
+        cl.style.clipPath = `polygon(${leftPoints})`;
+        cr.style.clipPath = `polygon(${rightPoints})`;
+      }
     }
+
     function drawBolt(a: number) {
       F.lineCap = "round";
       F.lineJoin = "round";
