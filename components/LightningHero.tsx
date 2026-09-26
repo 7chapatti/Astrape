@@ -122,26 +122,20 @@ export default function LightningHero() {
       seg(mx, my, x2, y2, d / 2, dep, o);
       if (dep < 2 && Math.random() < 0.07) seg(mx, my, mx + rnd(-1, 1) * H * 0.18, my + rnd(0.05, 0.25) * H, d / 2, dep + 1, o);
     }
-
-    let introBolt: number[][] = [];
-    function strike(x: number, y: number, big?: boolean, isIntro = false) {
+    function strike(x: number, y: number, big?: boolean) {
       bolts = [];
       seg(x, -10, x, y, H * 0.16, 0, bolts);
-      if (isIntro) {
-        introBolt = [...bolts];
-      }
       hit = { x, y };
       strikeAt = performance.now() / 1000;
-      boltScale = big ? 2.0 : 1;
+      boltScale = big ? 1.8 : 1;
     }
-
     function drawBolt(a: number) {
       F.lineCap = "round";
       F.lineJoin = "round";
       for (const [w, c, al] of [
-        [14, "110,150,255", 0.12],
-        [5, "160,190,255", 0.4],
-        [2, "255,255,255", 1.0],
+        [12, "110,150,255", 0.1],
+        [4, "160,190,255", 0.35],
+        [1.6, "255,255,255", 0.95],
       ] as const) {
         F.strokeStyle = `rgba(${c},${al * a})`;
         for (const s of bolts) {
@@ -181,7 +175,6 @@ export default function LightningHero() {
     function finish() {
       introDone = true;
       open = 1;
-      cl.style.clipPath = cr.style.clipPath = "none";
       cl.style.display = cr.style.display = "none";
       stage.classList.remove("opacity-0");
       stage.classList.add("opacity-100");
@@ -200,9 +193,9 @@ export default function LightningHero() {
       nextAmb = 0,
       lastR = 0;
 
-    const STRIKE_T = 0.35,
-      OPEN_START = 0.45,
-      OPEN_DUR = 1.8;
+    const STRIKE_T = 0.4,
+      OPEN_START = 0.5,
+      OPEN_DUR = 2.0;
 
     if (!fxEnabled || seen) {
       finish();
@@ -220,39 +213,14 @@ export default function LightningHero() {
       if (fxEnabled && !introDone) {
         if (!did[0] && t > STRIKE_T) {
           did[0] = true;
-          strike(W / 2, H, true, true);
+          strike(W / 2, H * 0.5, true);
         }
         p = Math.min(1, Math.max(0, (t - OPEN_START) / OPEN_DUR));
         open = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-
-        if (introBolt.length > 0 && W > 0 && H > 0) {
-          // Sort unique points top-to-bottom along the Y axis to build a clean tearing seam
-          const pts = introBolt.map(s => [s[2], s[3]] as [number, number]).sort((a, b) => a[1] - b[1]);
-          
-          let leftSeam = `0 0`;
-          let rightSeam = `${W} 0`;
-
-          // Construct the jagged polygon coordinates tracing the exact lightning nodes
-          for (const [px, py] of pts) {
-            leftSeam += `, ${px} ${py}`;
-            rightSeam += `, ${px} ${py}`;
-          }
-
-          leftSeam += `, 0 ${H}`;
-          rightSeam += `, ${W} ${H}`;
-
-          // Apply the jagged clip path to shape the curtains to the lightning bolt's crack
-          cl.style.clipPath = `polygon(${leftSeam})`;
-          cr.style.clipPath = `polygon(${rightSeam})`;
-
-          // Slide panels outward horizontally while maintaining the jagged seam edge
-          const xOffset = open * (W * 0.55);
-          cl.style.transform = `translateX(${-xOffset}px)`;
-          cr.style.transform = `translateX(${xOffset}px)`;
-        } else {
-          cl.style.transform = `translateX(${-open * 100}%)`;
-          cr.style.transform = `translateX(${open * 100}%)`;
-        }
+        
+        // Clean, flawless sliding curtain split right down the center
+        cl.style.transform = `translateX(${-open * 100}%)`;
+        cr.style.transform = `translateX(${open * 100}%)`;
 
         if (p >= 1 && !did[1]) {
           did[1] = true;
@@ -278,8 +246,8 @@ export default function LightningHero() {
       }
 
       if (flash > 0.02) {
-        const rg = F.createRadialGradient(hit.x, hit.y * 0.5, 0, hit.x, hit.y * 0.5, H * 0.6);
-        rg.addColorStop(0, `rgba(140,175,255,${flash * 0.4})`);
+        const rg = F.createRadialGradient(hit.x, hit.y, 0, hit.x, hit.y, H * 0.5);
+        rg.addColorStop(0, `rgba(140,175,255,${flash * 0.35})`);
         rg.addColorStop(1, "rgba(140,175,255,0)");
         F.fillStyle = rg;
         F.fillRect(0, 0, W, H);
@@ -425,8 +393,8 @@ export default function LightningHero() {
           </div>
         </div>
       </div>
-      <div ref={clRef} className="absolute inset-y-0 left-0 z-[4] w-full bg-[#030509]" aria-hidden />
-      <div ref={crRef} className="absolute inset-y-0 right-0 z-[4] w-full bg-[#030509]" aria-hidden />
+      <div ref={clRef} className="absolute inset-y-0 left-0 z-[4] w-[50.2%] bg-[#030509]" aria-hidden />
+      <div ref={crRef} className="absolute inset-y-0 right-0 z-[4] w-[50.2%] bg-[#030509]" aria-hidden />
       <canvas ref={fxRef} className="pointer-events-none absolute inset-0 z-[5] block h-full w-full" aria-hidden />
     </header>
   );
