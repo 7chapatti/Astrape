@@ -7,7 +7,8 @@ export default function LightningHero() {
   const sceneRef = useRef<HTMLCanvasElement>(null);
   const fxRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const curtainRef = useRef<HTMLCanvasElement>(null);
+  const clRef = useRef<HTMLDivElement>(null);
+  const crRef = useRef<HTMLDivElement>(null);
   const [fxOn, setFxOn] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -16,10 +17,10 @@ export default function LightningHero() {
     const sc = sceneRef.current!;
     const fx = fxRef.current!;
     const stage = stageRef.current!;
-    const cv = curtainRef.current!;
+    const cl = clRef.current!;
+    const cr = crRef.current!;
     const S = sc.getContext("2d")!;
     const F = fx.getContext("2d")!;
-    const CV = cv.getContext("2d")!;
 
     let W = 0,
       H = 0,
@@ -34,12 +35,7 @@ export default function LightningHero() {
       introDone = false,
       visible = true,
       boltScale = 1;
-    let seam: { x: number; y: number }[] = [];
-    let jitter: number[] = [];
-    const regenJitter = () => {
-      let v = 0;
-      jitter = seam.map(() => (v = v * 0.5 + rnd(-4, 4)));
-    };
+    const ao: number[][] = [[], []];
     const RGB = "120,160,255";
     const rnd = (a: number, b: number) => a + Math.random() * (b - a);
     const rng = (s: number) => () => (s = (s * 16807) % 2147483647) / 2147483647;
@@ -87,35 +83,17 @@ export default function LightningHero() {
       x.stroke();
       return c;
     }
-    function buildSeam() {
-      const pts: { x: number; y: number }[] = [{ x: W / 2, y: 0 }];
-      const walk = (x1: number, y1: number, x2: number, y2: number, d: number) => {
-        if (y2 - y1 < 10) {
-          pts.push({ x: x2, y: y2 });
-          return;
-        }
-        const my = (y1 + y2) / 2 + rnd(-d, d) * 0.25;
-        const mx = (x1 + x2) / 2 + rnd(-d, d);
-        walk(x1, y1, mx, my, d / 1.8);
-        walk(mx, my, x2, y2, d / 1.8);
-      };
-      walk(W / 2, 0, W / 2, H, W * 0.1);
-      seam = pts;
-      regenJitter();
-    }
     function size() {
       DPR = Math.min(devicePixelRatio || 1, 1.5);
       W = hero.clientWidth;
       H = hero.clientHeight;
-      for (const c of [sc, fx, cv]) {
+      for (const c of [sc, fx]) {
         c.width = W * DPR;
         c.height = H * DPR;
       }
       S.setTransform(DPR, 0, 0, DPR, 0, 0);
       F.setTransform(DPR, 0, 0, DPR, 0, 0);
-      CV.setTransform(DPR, 0, 0, DPR, 0, 0);
       layers = CFG.map((c, i) => ({ c, img: build(c, i) }));
-      buildSeam();
     }
     function drawScene() {
       S.fillStyle = "#03040a";
@@ -146,18 +124,18 @@ export default function LightningHero() {
     }
     function strike(x: number, y: number, big?: boolean) {
       bolts = [];
-      seg(x + rnd(-90, 90), -10, x, y, H * 0.16, 0, bolts);
+      seg(x, -10, x, y, H * 0.16, 0, bolts); // Force straight down the absolute center X coordinate
       hit = { x, y };
       strikeAt = performance.now() / 1000;
-      boltScale = big ? 1.7 : 1;
+      boltScale = big ? 2.0 : 1; // Slightly punchier scale for the grand opening strike
     }
     function drawBolt(a: number) {
       F.lineCap = "round";
       F.lineJoin = "round";
       for (const [w, c, al] of [
-        [12, "110,150,255", 0.1],
-        [4, "160,190,255", 0.35],
-        [1.6, "255,255,255", 0.95],
+        [14, "110,150,255", 0.12],
+        [5, "160,190,255", 0.4],
+        [2, "255,255,255", 1.0],
       ] as const) {
         F.strokeStyle = `rgba(${c},${al * a})`;
         for (const s of bolts) {
@@ -169,48 +147,35 @@ export default function LightningHero() {
         }
       }
     }
-    function drawCurtain(openAmt: number, edgeAlpha: number, flicker: number) {
-      CV.clearRect(0, 0, W, H);
-      if (openAmt >= 1 || !seam.length) return;
-      CV.fillStyle = "#030509";
-      for (const side of [-1, 1] as const) {
-        CV.beginPath();
-        CV.moveTo(side < 0 ? 0 : W, 0);
-        CV.lineTo(side < 0 ? 0 : W, H);
-        for (let i = seam.length - 1; i >= 0; i--) {
-          const jx = (jitter[i] || 0) * flicker * 0.5;
-          CV.lineTo(seam[i].x + jx + side * openAmt * W, seam[i].y);
+    function regen() {
+      for (const o of ao) {
+        o.length = 0;
+        let v = 0;
+        for (let i = 0; i <= H / 12 + 1; i++) {
+          v = v * 0.55 + rnd(-9, 9);
+          o.push(v);
         }
-        CV.closePath();
-        CV.fill();
       }
-      if (edgeAlpha > 0.01) {
-        CV.lineCap = "round";
-        CV.lineJoin = "round";
-        for (const side of [-1, 1] as const) {
-          for (const [w, c, al] of [
-            [8, "110,150,255", 0.16],
-            [3, "170,200,255", 0.55],
-            [1.2, "255,255,255", 0.95],
-          ] as const) {
-            CV.strokeStyle = `rgba(${c},${(al as number) * edgeAlpha})`;
-            CV.lineWidth = w as number;
-            CV.beginPath();
-            seam.forEach((p, i) => {
-              const jx = (jitter[i] || 0) * flicker;
-              const x = p.x + jx + side * openAmt * W;
-              if (i) CV.lineTo(x, p.y);
-              else CV.moveTo(x, p.y);
-            });
-            CV.stroke();
-          }
-        }
+    }
+    function arc(x: number, a: number, k: number) {
+      const o = ao[k];
+      F.lineCap = "round";
+      for (const [w, c, al] of [
+        [9, "110,150,255", 0.14],
+        [3, "170,200,255", 0.5],
+        [1.2, "255,255,255", 0.9],
+      ] as const) {
+        F.strokeStyle = `rgba(${c},${al * a})`;
+        F.lineWidth = w as number;
+        F.beginPath();
+        o.forEach((v, i) => (i ? F.lineTo(x + v, i * 12) : F.moveTo(x + v, 0)));
+        F.stroke();
       }
     }
     function finish() {
       introDone = true;
       open = 1;
-      CV.clearRect(0, 0, W, H);
+      cl.style.display = cr.style.display = "none";
       stage.classList.remove("opacity-0");
       stage.classList.add("opacity-100");
     }
@@ -222,14 +187,17 @@ export default function LightningHero() {
     } catch {}
 
     size();
+    regen();
     let t0 = performance.now() / 1000,
       did = [false, false],
       nextAmb = 0,
-      lastJitter = 0;
-    const STRIKE_T = 0.6,
-      HOLD = 1.0,
-      OPEN_START = STRIKE_T + HOLD + 0.15,
-      OPEN_DUR = 2.2;
+      lastR = 0;
+    
+    // Tighter sequence: lightning splits the center, and the curtains immediately rip open along it
+    const STRIKE_T = 0.35,
+      OPEN_START = 0.45,
+      OPEN_DUR = 1.8;
+
     if (!fxEnabled || seen) {
       finish();
       nextAmb = t0 + 1.2;
@@ -242,26 +210,19 @@ export default function LightningHero() {
       const now = ts / 1000,
         t = now - t0;
       let p = 0;
+
       if (fxEnabled && !introDone) {
         if (!did[0] && t > STRIKE_T) {
           did[0] = true;
-          bolts = [];
-          for (let i = 1; i < seam.length; i++) {
-            bolts.push([seam[i - 1].x, seam[i - 1].y, seam[i].x, seam[i].y, 0]);
-          }
-          hit = { x: W / 2, y: H * 0.5 };
-          strikeAt = now;
-          boltScale = 1.7;
+          strike(W / 2, H, true); // Strike goes all the way down the center line to the bottom
         }
         p = Math.min(1, Math.max(0, (t - OPEN_START) / OPEN_DUR));
         open = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-        const edgeA = t > OPEN_START ? Math.min(1, (t - OPEN_START) / 0.5) : 0;
-        if (t > OPEN_START - 0.3 && now - lastJitter > 0.09) {
-          regenJitter();
-          lastJitter = now;
-        }
-        const flicker = t > OPEN_START - 0.3 ? Math.min(1, (t - (OPEN_START - 0.3)) / 0.3) : 0;
-        drawCurtain(open, edgeA * (1 - Math.max(0, (p - 0.8) / 0.2)), flicker);
+        
+        // Curtains part precisely from the center line where the lightning struck
+        cl.style.transform = `translateX(${-open * 100}%)`;
+        cr.style.transform = `translateX(${open * 100}%)`;
+
         if (p >= 1 && !did[1]) {
           did[1] = true;
           finish();
@@ -269,26 +230,41 @@ export default function LightningHero() {
         }
       } else if (fxEnabled && now > nextAmb) {
         strike(W * rnd(0.12, 0.88), H * rnd(0.7, 0.82));
-        nextAmb = now + rnd(1, 2);
+        nextAmb = now + rnd(9, 15);
       }
+
       const st = now - strikeAt;
       flash = 0.55 * (st < 0 ? 0 : st < 0.07 ? st / 0.07 : Math.exp(-(st - 0.07) * 3.2));
-      const boltHold = boltScale > 1.2 ? HOLD : 0.09;
-      const ba = st < boltHold ? 1 : Math.exp(-(st - boltHold) * 3.5);
+      const ba = st < 0.09 ? 1 : Math.exp(-(st - 0.09) * 3.5);
+
       drawScene();
       F.clearRect(0, 0, W, H);
       F.globalCompositeOperation = "lighter";
+
       if (bolts.length) {
         if (ba < 0.02) bolts = [];
         else drawBolt(ba);
       }
+
       if (flash > 0.02) {
-        const rg = F.createRadialGradient(hit.x, hit.y, 0, hit.x, hit.y, H * 0.5);
-        rg.addColorStop(0, `rgba(140,175,255,${flash * 0.35})`);
+        const rg = F.createRadialGradient(hit.x, hit.y * 0.5, 0, hit.x, hit.y * 0.5, H * 0.6);
+        rg.addColorStop(0, `rgba(140,175,255,${flash * 0.4})`);
         rg.addColorStop(1, "rgba(140,175,255,0)");
         F.fillStyle = rg;
         F.fillRect(0, 0, W, H);
       }
+
+      // Live electric arcs trace the exact seam edges as the curtains pull apart
+      if (fxEnabled && !introDone && t > OPEN_START && p < 1) {
+        if (now - lastR > 0.11) {
+          regen();
+          lastR = now;
+        }
+        const a = Math.min(1, (t - OPEN_START) / 0.8) * (1 - Math.max(0, (p - 0.7) / 0.3));
+        arc(W / 2 - open * (W / 2), a, 0);
+        arc(W / 2 + open * (W / 2), a, 1);
+      }
+
       F.globalCompositeOperation = "source-over";
       hero.style.setProperty("--f", flash.toFixed(2));
     }
@@ -301,6 +277,7 @@ export default function LightningHero() {
       clearTimeout(rz);
       rz = setTimeout(() => {
         size();
+        regen();
       }, 200);
     };
     window.addEventListener("resize", onResize);
@@ -418,7 +395,8 @@ export default function LightningHero() {
           </div>
         </div>
       </div>
-      <canvas ref={curtainRef} className="pointer-events-none absolute inset-0 z-[4] block h-full w-full" aria-hidden />
+      <div ref={clRef} className="absolute inset-y-0 left-0 z-[4] w-[50.2%] bg-[#030509]" aria-hidden />
+      <div ref={crRef} className="absolute inset-y-0 right-0 z-[4] w-[50.2%] bg-[#030509]" aria-hidden />
       <canvas ref={fxRef} className="pointer-events-none absolute inset-0 z-[5] block h-full w-full" aria-hidden />
     </header>
   );
