@@ -1,14 +1,11 @@
 "use client";
 import { useEffect, useState, type Dispatch } from "react";
-import FireGameLevel from "./FireGameLevel";
+import dynamic from "next/dynamic";
 import FireGameWinning from "./FireGameWinning";
 import FireGameLosing from "./FireGameLosing";
 import type { FireGameAction, FireGameState } from "@/lib/fire-game/types";
 
-// Fixed, non-skippable timing for the collapsing transition (§4.3): the
-// homepage fades out completely to flat black first, holds on empty black,
-// then the level's own bold title fades in/out on top of that same black
-// before the actual level mounts. No crossfade at any point.
+const FireGameLevel = dynamic(() => import("./FireGameLevel"), { ssr: false });
 const FADE_MS = 450;
 const BLACK_HOLD_MS = 700;
 const TITLE_FADE_MS = 400;
@@ -26,6 +23,7 @@ export default function FireGameOverlay({
 
   useEffect(() => {
     if (state.phase !== "collapsing") return;
+    void import("./FireGameLevel"); // warm the chunk during the black hold
     setBlackOpacity(0);
     setTitleOpacity(0);
     const raf = requestAnimationFrame(() => setBlackOpacity(1));
@@ -45,7 +43,7 @@ export default function FireGameOverlay({
 
   if (state.phase === "playing") {
     return (
-      <div className="fixed inset-0 z-[100]">
+      <div className="fixed inset-0 z-[100] bg-black" role="dialog" aria-modal="true" aria-label="Rebuild mini-game">
         <FireGameLevel
           onWin={(exit) => dispatch({ type: "REACHED_TAIL_OF_E", ...exit })}
           onLose={(exit) => dispatch({ type: "FELL_OFF_BOTTOM", ...exit })}
@@ -60,7 +58,7 @@ export default function FireGameOverlay({
   if (state.phase !== "collapsing") return null;
 
   return (
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-[100]" aria-hidden="true">
       <div
         className="absolute inset-0 bg-black"
         style={{ opacity: blackOpacity, transition: `opacity ${FADE_MS}ms ease-in-out` }}
@@ -73,8 +71,8 @@ export default function FireGameOverlay({
            distinct from the homepage logo's font"). A real custom bold
            face can replace this system stack later without touching any
            of the transition logic. */}
-        <span
-          aria-hidden
+        <p
+          className="m-0"
           style={{
             fontFamily: '"Arial Black", "Helvetica Neue", sans-serif',
             fontWeight: 900,
@@ -84,7 +82,7 @@ export default function FireGameOverlay({
           }}
         >
           ASTRAPE
-        </span>
+        </p>
       </div>
     </div>
   );
