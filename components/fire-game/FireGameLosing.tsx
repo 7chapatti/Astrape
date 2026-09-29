@@ -93,7 +93,7 @@ export default function FireGameLosing({ state, dispatch }: { state: FireGameSta
   }, [dispatch]);
 
   return (
-    <div className="fixed inset-0 z-[100]" style={{ opacity: revealing ? 0 : 1, transition: revealing ? `opacity ${REVEAL_MS}ms ease-in-out` : undefined }}>
+    <div className="fixed inset-0 z-[100]" aria-hidden="true" style={{ opacity: revealing ? 0 : 1, transition: revealing ? `opacity ${REVEAL_MS}ms ease-in-out` : undefined }}>
       <canvas ref={canvasRef} className="block h-full w-full" />
     </div>
   );
