@@ -12,10 +12,21 @@ export default function LightningHero() {
   const phaseRef = useRef<FireGamePhase>(fireGame.phase);
   const outcomeRef = useRef<FireGameOutcome | null>(fireGame.outcome);
   
+  // Track mobile state to completely lock game interactions
+  const [isMobile, setIsMobile] = useState(false);
+
   useEffect(() => {
     phaseRef.current = fireGame.phase;
     outcomeRef.current = fireGame.outcome;
   }, [fireGame.phase, fireGame.outcome]);
+
+  // Handle window resizing for mobile lockout
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const heroRef = useRef<HTMLElement>(null);
   const sceneRef = useRef<HTMLCanvasElement>(null);
@@ -35,7 +46,11 @@ export default function LightningHero() {
 
     let W = 0, H = 0, DPR = 1;
     let layers: { c: any; img: HTMLCanvasElement }[] = [];
-    let fxEnabled = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    
+    // Store user preference separately so we can toggle it on/off based on screen size
+    let userFxPref = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let fxEnabled = userFxPref && window.innerWidth >= 768;
+    
     let flash = 0, strikeAt = -99, bolts: number[][] = [], hit = { x: 0, y: 0 }, visible = true;
     
     let dwellAccum = 0, burnAmount = 0;
@@ -106,11 +121,14 @@ export default function LightningHero() {
       }
       S.globalAlpha = 1;
 
-      if (phaseRef.current === "ambient" || phaseRef.current === "burning" || phaseRef.current === "engulfed") {
-        if (burnEmbers.length > 0) drawEmbers();
-        drawRealFlames();
-      } else if (phaseRef.current === "resolved" && outcomeRef.current === "won") { 
-        if (fxEnabled) drawWinFlames();
+      // Only draw flames if effects are allowed (desktop & toggled on)
+      if (fxEnabled) {
+          if (phaseRef.current === "ambient" || phaseRef.current === "burning" || phaseRef.current === "engulfed") {
+            if (burnEmbers.length > 0) drawEmbers();
+            drawRealFlames();
+          } else if (phaseRef.current === "resolved" && outcomeRef.current === "won") { 
+            drawWinFlames();
+          }
       }
     }
 
@@ -122,27 +140,23 @@ export default function LightningHero() {
       if (el) {
          const rect = el.getBoundingClientRect();
          
-         // The © character is often visually shifted slightly left inside its bounding box due to font kerning.
-         // Subtract a tiny fraction to align perfectly with the visual ring.
          const cx = rect.left + rect.width * 0.48; 
-         // Align perfectly to the visual vertical center.
          const cy = rect.top + rect.height * 0.52; 
          
-         // The radius of the © outer ring is about 35% of the element's full width.
-         const radius = rect.width * 0.35; 
+         const ringRadius = rect.width * 0.34; 
          
-         // Spawn particles in a 360-degree circle around the ring
-         if (Math.random() > 0.1) {
+         for (let k = 0; k < 2; k++) {
              const angle = rnd(0, Math.PI * 2);
+             const currentRadius = ringRadius + rnd(-2, 2);
              
              flames.push({
-                 x: cx + Math.cos(angle) * radius, 
-                 y: cy + Math.sin(angle) * radius,
-                 vx: rnd(-0.2, 0.2), // Slight horizontal drift
-                 vy: rnd(-0.5, -1.5), // All flames drift gently upwards
+                 x: cx + Math.cos(angle) * currentRadius, 
+                 y: cy + Math.sin(angle) * currentRadius,
+                 vx: rnd(-0.1, 0.1), 
+                 vy: rnd(-0.3, -0.8), 
                  life: 0,
-                 maxLife: rnd(0.2, 0.5), // Keep them short so they hug the symbol
-                 size: rnd(4, 9) // Tiny embers to form a cohesive ring
+                 maxLife: rnd(0.15, 0.35), 
+                 size: rnd(3, 6) 
              });
          }
       }
@@ -163,8 +177,8 @@ export default function LightningHero() {
          const currentSize = f.size * (1 - progress * 0.3);
 
          const rg = S.createRadialGradient(f.x, f.y, 0, f.x, f.y, currentSize);
-         rg.addColorStop(0, `rgba(255, 200, 80, ${alpha * 0.8})`);
-         rg.addColorStop(0.5, `rgba(255, 80, 10, ${alpha * 0.4})`);
+         rg.addColorStop(0, `rgba(255, 210, 100, ${alpha * 0.9})`);
+         rg.addColorStop(0.5, `rgba(255, 100, 20, ${alpha * 0.5})`);
          rg.addColorStop(1, "rgba(255, 0, 0, 0)");
          
          S.fillStyle = rg;
@@ -356,15 +370,30 @@ export default function LightningHero() {
     raf = requestAnimationFrame(frame);
     const io = new IntersectionObserver((e) => (visible = e[0].isIntersecting));
     io.observe(hero);
+    
     let rz: ReturnType<typeof setTimeout>;
-    const onResize = () => { clearTimeout(rz); rz = setTimeout(() => { size(); }, 200); };
+    const onResize = () => { 
+        clearTimeout(rz); 
+        rz = setTimeout(() => { 
+            size(); 
+            // If resized into mobile view, halt active lightning 
+            const wasEnabled = fxEnabled;
+            fxEnabled = userFxPref && window.innerWidth >= 768;
+            if (!fxEnabled && wasEnabled) {
+                bolts = []; strikeAt = -99;
+            }
+        }, 200); 
+    };
     window.addEventListener("resize", onResize);
+    
     const toggle = (on: boolean) => {
-      fxEnabled = on;
-      if (!on) { bolts = []; strikeAt = -99; } 
+      userFxPref = on;
+      fxEnabled = userFxPref && window.innerWidth >= 768;
+      if (!fxEnabled) { bolts = []; strikeAt = -99; } 
       else { nextAmb = performance.now() / 1000 + 1.5; }
     };
     (hero as any)._toggle = toggle;
+    
     return () => { 
         cancelAnimationFrame(raf); 
         io.disconnect(); 
@@ -386,6 +415,7 @@ export default function LightningHero() {
               </Link>
             </div>
             
+            {/* Nav list is entirely hidden on mobile via Tailwind's `hidden sm:flex` */}
             <ul className="hidden items-center gap-7 sm:flex m-0 p-0 list-none">
               <li>
                 <Link href="/services" className="text-[.95rem] font-medium text-mute hover:text-ink">Services</Link>
@@ -413,8 +443,8 @@ export default function LightningHero() {
 
         <section aria-labelledby="hero-title" className="flex flex-1 flex-col items-center justify-center px-6 pb-[8vh] text-center">
           <div
-            className={`relative inline-block ${fireGame.phase === "engulfed" ? "cursor-pointer" : ""}`}
-            {...(fireGame.phase === "engulfed"
+            className={`relative inline-block ${fireGame.phase === "engulfed" && !isMobile ? "cursor-pointer" : ""}`}
+            {...(fireGame.phase === "engulfed" && !isMobile
               ? { role: "button", tabIndex: 0, "aria-label": "Start Rebuild Mini-Game", onClick: () => fireGameDispatch({ type: "LOGO_CLICKED" }) }
               : {})}
           >
@@ -425,6 +455,7 @@ export default function LightningHero() {
                 role={fireGame.phase === "resolved" ? "button" : "presentation"}
                 tabIndex={fireGame.phase === "resolved" ? 0 : -1}
                 onClick={() => {
+                    if (isMobile) return;
                     if (fireGame.phase === "resolved") {
                         localStorage.removeItem("astrape-fire-outcome");
                         fireGameDispatch({ type: "BADGE_CLICKED" });
@@ -432,11 +463,11 @@ export default function LightningHero() {
                 }}
                 className={`absolute top-[4%] -right-[6%] flex items-center justify-center text-[clamp(1rem,2vw,1.8rem)] font-normal outline-none focus:outline-none select-none ${
                   fireGame.phase === "resolved" 
-                    ? "cursor-pointer opacity-80 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300" 
+                    ? `${!isMobile ? "cursor-pointer hover:opacity-100 hover:scale-110 active:scale-95" : ""} opacity-80 transition-all duration-300` 
                     : "opacity-0 pointer-events-none transition-none" 
                 }`}
                 style={
-                  fireGame.phase === "resolved" && fireGame.outcome === "won"
+                  fireGame.phase === "resolved" && fireGame.outcome === "won" && !isMobile
                     ? {
                         color: "#ff9a3d",
                         textShadow: "0 0 10px rgba(255, 130, 40, 0.8), 0 -2px 4px rgba(255, 230, 150, 0.6)",
@@ -487,7 +518,8 @@ export default function LightningHero() {
       
       <canvas ref={fxRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-[61] block h-full w-full" />
       
-      {(fireGame.phase === "collapsing" || fireGame.phase === "playing" || fireGame.phase === "winning" || fireGame.phase === "losing") && (
+      {/* Do not even mount the game layout on mobile devices */}
+      {!isMobile && (fireGame.phase === "collapsing" || fireGame.phase === "playing" || fireGame.phase === "winning" || fireGame.phase === "losing") && (
         <FireGameOverlay state={fireGame} dispatch={fireGameDispatch} />
       )}
     </header>
