@@ -18,10 +18,10 @@ export default function FireGameWinning({ dispatch }: { state: FireGameState; di
     const ctx = canvas.getContext("2d")!;
     let W = 0, H = 0, DPR = 1;
 
-    let targetX = W / 2, targetY = H / 2, targetSize = 24;
+    let targetX = window.innerWidth / 2, targetY = window.innerHeight / 2, targetSize = 24;
     
     function getTargetRect() {
-        const el = document.querySelector("h1#hero-title sup#astrape-copyright");
+        const el = document.getElementById("astrape-copyright");
         if (el) {
             const rect = el.getBoundingClientRect();
             targetX = rect.left + rect.width / 2;
@@ -44,10 +44,13 @@ export default function FireGameWinning({ dispatch }: { state: FireGameState; di
 
     let raf = 0;
     const t0 = performance.now();
+    let lastTs = t0;
 
     function frame(ts: number) {
       raf = requestAnimationFrame(frame);
       const elapsed = ts - t0;
+      const dt = Math.min(0.05, Math.max(0, (ts - lastTs) / 1000));
+      lastTs = ts;
       const centerSize = Math.min(W, H) * 0.4; 
       const centerX = W / 2;
       const centerY = H / 2;
@@ -63,7 +66,6 @@ export default function FireGameWinning({ dispatch }: { state: FireGameState; di
       getTargetRect();
 
       if (elapsed < FIREBALL_ENTER_MS) {
-          // Draw black background FIRST so fireball is visible!
           ctx.fillStyle = `rgba(0, 0, 0, ${bgAlpha})`; 
           ctx.fillRect(0, 0, W, H);
           
@@ -132,9 +134,9 @@ export default function FireGameWinning({ dispatch }: { state: FireGameState; di
 
           for (let i = flames.length - 1; i >= 0; i--) {
               const f = flames[i];
-              f.life += 0.016;
-              f.ox += f.vx;
-              f.oy += f.vy;
+              f.life += dt;
+              f.ox += f.vx * dt * 60;
+              f.oy += f.vy * dt * 60;
               
               if (f.life >= f.maxLife) {
                   flames.splice(i, 1);
@@ -169,7 +171,7 @@ export default function FireGameWinning({ dispatch }: { state: FireGameState; di
   }, [dispatch]);
 
   return (
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-[100]" aria-hidden="true">
       <canvas ref={canvasRef} className="block h-full w-full" />
     </div>
   );
