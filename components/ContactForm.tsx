@@ -1,56 +1,90 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabase";
+
+const MAX = { name: 100, business: 150, email: 254, site: 300, message: 5000 } as const;
 
 export default function ContactForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const doneHeadingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (status === "done") doneHeadingRef.current?.focus();
+  }, [status]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (status === "sending") return;
+    const fd = new FormData(e.currentTarget);
+
+    if (fd.get("contact_extra")) {
+      setStatus("done");
+      return;
+    }
     if (!supabaseConfigured) {
       setStatus("error");
       return;
     }
+
     setStatus("sending");
-    const fd = new FormData(e.currentTarget);
+    const text = (key: string) => String(fd.get(key) ?? "").trim();
     const payload = {
-      name: fd.get("name") as string,
-      business: (fd.get("business") as string) || null,
-      email: fd.get("email") as string,
-      site: (fd.get("site") as string) || null,
-      message: fd.get("msg") as string,
+      name: text("name").slice(0, MAX.name),
+      business: text("business").slice(0, MAX.business) || null,
+      email: text("email").slice(0, MAX.email),
+      site: text("site").slice(0, MAX.site) || null,
+      message: text("msg").slice(0, MAX.message),
     };
-    const { error } = await supabase.from("contact_submissions").insert(payload);
-    setStatus(error ? "error" : "done");
+
+    try {
+      const { error } = await supabase.from("contact_submissions").insert(payload);
+      setStatus(error ? "error" : "done");
+    } catch {
+      setStatus("error");
+    }
   }
 
   if (status === "done") {
     return (
-      <div className="py-10">
-        <h2 className="mb-2 font-display text-3xl font-bold">Got it.</h2>
+      <section aria-labelledby="contact-done" className="py-10">
+        <h2 id="contact-done" ref={doneHeadingRef} tabIndex={-1} className="mb-2 font-display text-3xl font-bold outline-none">
+          Got it.
+        </h2>
         <p className="m-0 text-mute">Thanks — we&apos;ll get back to you within one working day.</p>
-      </div>
+      </section>
     );
   }
 
   return (
     <form onSubmit={onSubmit} className="grid gap-6 pb-[clamp(64px,10vw,110px)]">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <Field label="Name" id="name" name="name" required />
-        <Field label="Business name" id="business" name="business" optional />
+        <Field label="Name" id="name" name="name" autoComplete="name" maxLength={MAX.name} required />
+        <Field label="Business name" id="business" name="business" autoComplete="organization" maxLength={MAX.business} optional />
       </div>
-      <Field label="Email" id="email" name="email" type="email" required />
-      <Field label="Current website" id="site" name="site" type="url" placeholder="https://" optional />
+      <Field label="Email" id="email" name="email" type="email" autoComplete="email" maxLength={MAX.email} required />
+      <Field label="Current website" id="site" name="site" type="url" autoComplete="url" maxLength={MAX.site} placeholder="https://" optional />
       <div className="grid gap-2">
         <label htmlFor="msg" className="text-[.92rem] text-mute">Tell us a bit more</label>
         <textarea
           id="msg"
           name="msg"
           required
+          maxLength={MAX.message}
           placeholder="What's the site for, and what should it do for you?"
-          className="min-h-[120px] w-full resize-y rounded-md border border-line bg-[#0a0f1c] px-4 py-3 text-ink focus:border-acc focus:outline-none"
+          className="min-h-[120px] w-full resize-y rounded-md border border-mute/40 bg-[#0a0f1c] px-4 py-3 text-ink focus:border-acc focus:outline-none"
         />
       </div>
+
+      {/* Honeypot. Hidden from sight, keyboard and assistive tech. */}
+      <input
+        type="text"
+        name="contact_extra"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="pointer-events-none absolute left-[-9999px] h-0 w-0 opacity-0"
+      />
+
       <button
         type="submit"
         disabled={status === "sending"}
@@ -59,7 +93,7 @@ export default function ContactForm() {
         {status === "sending" ? "Sending…" : "Send"}
       </button>
       {status === "error" && (
-        <p className="m-0 text-sm text-mute">
+        <p role="alert" className="m-0 text-sm text-mute">
           {supabaseConfigured
             ? "Something went wrong sending that — mind trying again in a moment?"
             : "This form isn't connected yet — add your Supabase keys to .env.local (see the README)."}
@@ -77,6 +111,8 @@ function Field({
   required,
   optional,
   placeholder,
+  autoComplete,
+  maxLength,
 }: {
   label: string;
   id: string;
@@ -85,11 +121,13 @@ function Field({
   required?: boolean;
   optional?: boolean;
   placeholder?: string;
+  autoComplete?: string;
+  maxLength?: number;
 }) {
   return (
     <div className="grid gap-2">
       <label htmlFor={id} className="text-[.92rem] text-mute">
-        {label} {optional && <span className="text-[#5f6a86]">(optional)</span>}
+        {optional ? `${label} (optional)` : label}
       </label>
       <input
         id={id}
@@ -97,7 +135,9 @@ function Field({
         type={type}
         required={required}
         placeholder={placeholder}
-        className="w-full rounded-md border border-line bg-[#0a0f1c] px-4 py-3 text-ink focus:border-acc focus:outline-none"
+        autoComplete={autoComplete}
+        maxLength={maxLength}
+        className="w-full rounded-md border border-mute/40 bg-[#0a0f1c] px-4 py-3 text-ink focus:border-acc focus:outline-none"
       />
     </div>
   );
