@@ -410,8 +410,8 @@ export default function LightningHero() {
               </Link>
             </div>
             
-            {/* Desktop Navigation */}
-            <ul className="hidden items-center gap-7 sm:flex m-0 p-0 list-none">
+            {/* Desktop Navigation (Visible at md: 768px and up) */}
+            <ul className="hidden items-center gap-7 md:flex m-0 p-0 list-none">
               <li>
                 <Link href="/services" className="text-[.95rem] font-medium text-mute hover:text-ink">Services</Link>
               </li>
@@ -434,10 +434,10 @@ export default function LightningHero() {
               </li>
             </ul>
 
-            {/* Mobile Hamburger Button */}
+            {/* Mobile Hamburger Button (Visible below 768px) */}
             <button 
               type="button" 
-              className="sm:hidden text-mute hover:text-ink focus:outline-none"
+              className="md:hidden text-mute hover:text-ink focus:outline-none"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Open menu"
             >
@@ -447,48 +447,6 @@ export default function LightningHero() {
             </button>
           </div>
         </nav>
-
-        {/* Mobile Full-Screen Menu Overlay */}
-        {mobileMenuOpen && (
-          <div className="fixed inset-0 z-[100] flex flex-col bg-bg px-5 py-6 sm:hidden animate-in fade-in duration-200">
-            <div className="flex items-center justify-between">
-              <Link 
-                href="/" 
-                className="font-display text-[1.35rem] font-bold tracking-tight text-ink no-underline"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Astrape
-              </Link>
-              <button 
-                type="button" 
-                className="text-mute hover:text-ink focus:outline-none"
-                onClick={() => setMobileMenuOpen(false)}
-                aria-label="Close menu"
-              >
-                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <ul className="mt-16 flex flex-col items-center gap-8 text-[1.1rem] font-medium text-mute list-none p-0">
-              <li>
-                <Link href="/services" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>Services</Link>
-              </li>
-              <li>
-                <Link href="/rebuild" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>Rebuild</Link>
-              </li>
-              <li>
-                <Link href="/projects" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>Projects</Link>
-              </li>
-              <li>
-                <Link href="/about" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>About</Link>
-              </li>
-              <li>
-                <Link href="/contact" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
-              </li>
-            </ul>
-          </div>
-        )}
 
         <section aria-labelledby="hero-title" className="flex flex-1 flex-col items-center justify-center px-6 pb-[8vh] text-center">
           <div
@@ -569,6 +527,48 @@ export default function LightningHero() {
       
       {!isMobile && (fireGame.phase === "collapsing" || fireGame.phase === "playing" || fireGame.phase === "winning" || fireGame.phase === "losing") && (
         <FireGameOverlay state={fireGame} dispatch={fireGameDispatch} />
+      )}
+
+      {/* Extracted Mobile Menu to root to ensure it breaks out of z-[3] stacking context entirely */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[999] flex flex-col bg-[#03040a] px-5 py-6 md:hidden">
+          <div className="flex items-center justify-between">
+            <Link 
+              href="/" 
+              className="font-display text-[1.35rem] font-bold tracking-tight text-ink no-underline"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Astrape
+            </Link>
+            <button 
+              type="button" 
+              className="text-mute hover:text-ink focus:outline-none"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <ul className="mt-16 flex flex-col items-center gap-8 text-[1.1rem] font-medium text-mute list-none p-0">
+            <li>
+              <Link href="/services" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>Services</Link>
+            </li>
+            <li>
+              <Link href="/rebuild" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>Rebuild</Link>
+            </li>
+            <li>
+              <Link href="/projects" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>Projects</Link>
+            </li>
+            <li>
+              <Link href="/about" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>About</Link>
+            </li>
+            <li>
+              <Link href="/contact" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+            </li>
+          </ul>
+        </div>
       )}
     </header>
   );
