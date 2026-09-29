@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <>
       <LightningHero />
-      <main>
+      <main id="main-content">
         <section id="services" className="border-t border-line py-[clamp(72px,12vw,140px)]">
           <div className="mx-auto max-w-[1080px] px-5 sm:px-8">
             <h2 className="mb-10 max-w-[18ch] font-display text-[clamp(2rem,4.6vw,3.3rem)] font-bold leading-[1.05] tracking-tight">
