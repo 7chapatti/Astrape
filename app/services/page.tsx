@@ -26,16 +26,14 @@ const ROWS = [
 export default function Services() {
   return (
     <>
-      <Nav active="/services" />
-      <main>
-      <div className="mx-auto max-w-[1080px] px-5 sm:px-8">
-        <section className="py-[clamp(80px,13vw,140px)] pb-[clamp(48px,7vw,72px)]">
+      <Nav />
+      <main id="main-content">
+      <section className="mx-auto max-w-[1080px] px-5 sm:px-8 py-[clamp(80px,13vw,140px)] pb-[clamp(48px,7vw,72px)]">
           <h1 className="mb-4 max-w-[17ch] font-display text-[clamp(2.6rem,6vw,4.2rem)] font-extrabold leading-[1.05] tracking-tight">
             What&apos;s included, on every site we build
           </h1>
           <p className="max-w-[38rem] text-[1.12rem] text-mute">Not add-ons, not upsells — these are the standard for how we build.</p>
         </section>
-      </div>
 
       <section className="border-t border-line bg-[#070b14] py-[clamp(56px,9vw,100px)]">
         <div className="mx-auto max-w-[1080px] px-5 sm:px-8">
