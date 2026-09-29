@@ -15,8 +15,16 @@ const BOOST_VX = 14;
 export default function FireGameLevel({ onWin, onLose }: { onWin: (exit: FireExit) => void; onLose: (exit: FireExit) => void; }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keys = useRef({ left: false, right: false, up: false, down: false, jumpQueued: false });
+  const onWinRef = useRef(onWin);
+  const onLoseRef = useRef(onLose);
+  useEffect(() => {
+    onWinRef.current = onWin;
+    onLoseRef.current = onLose;
+  });
 
   useEffect(() => {
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
 
@@ -31,7 +39,6 @@ export default function FireGameLevel({ onWin, onLose }: { onWin: (exit: FireExi
       const len = Math.hypot(s.x2 - s.x1, s.y2 - s.y1);
       const angle = Math.atan2(s.y2 - s.y1, s.x2 - s.x1);
       
-      // FRICTION 0 prevents getting stuck to vertical walls when falling
       return Matter.Bodies.rectangle(cx, cy, Math.max(len, 1), WALL_THICKNESS, {
         isStatic: true, angle, friction: 0, restitution: 0.1, 
         label: s.climbable ? "climbable" : "wall",
@@ -54,7 +61,7 @@ export default function FireGameLevel({ onWin, onLose }: { onWin: (exit: FireExi
       boosterW, level.winZone.h, { isStatic: true, isSensor: true, label: "booster" }
     );
 
-    Matter.World.add(world, [...wallBodies, fireball, winSensor, boosterSensor]);
+    Matter.Composite.add(world, [...wallBodies, fireball, winSensor, boosterSensor]);
 
     let W = 0, H = 0, camX = level.spawn.x, camY = level.spawn.y;
     function toScreen(wx: number, wy: number) { return { x: W / 2 + (wx - camX), y: H / 2 + (wy - camY) }; }
@@ -62,7 +69,6 @@ export default function FireGameLevel({ onWin, onLose }: { onWin: (exit: FireExi
     let resolved = false, boosted = false;
     let jumpContacts = 0, touchingClimbable = false;
 
-    // Checks live pairs right before updating physics, totally solves sticky-edge jumping!
     const onBeforeUpdate = () => {
       jumpContacts = 0;
       touchingClimbable = false;
@@ -87,7 +93,7 @@ export default function FireGameLevel({ onWin, onLose }: { onWin: (exit: FireExi
         if (other.label === "winZone" && !resolved && fireball.velocity.x >= level.winMinSpeed) {
           resolved = true;
           const s = toScreen(fireball.position.x, fireball.position.y);
-          onWin({ x: s.x, y: s.y, vx: fireball.velocity.x, vy: fireball.velocity.y });
+          onWinRef.current({ x: s.x, y: s.y, vx: fireball.velocity.x, vy: fireball.velocity.y });
         }
       }
     };
@@ -97,6 +103,8 @@ export default function FireGameLevel({ onWin, onLose }: { onWin: (exit: FireExi
 
     const onKeyDown = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
+
+      if (e.key.startsWith("Arrow") || e.code === "Space") e.preventDefault();
       if (e.key === "ArrowLeft" || k === "a") keys.current.left = true;
       if (e.key === "ArrowRight" || k === "d") keys.current.right = true;
       if (e.key === "ArrowDown" || k === "s") keys.current.down = true;
@@ -155,7 +163,7 @@ export default function FireGameLevel({ onWin, onLose }: { onWin: (exit: FireExi
         if (fireball.position.y > level.fallBottomY && !resolved) {
           resolved = true;
           const s = toScreen(fireball.position.x, fireball.position.y);
-          onLose({ x: s.x, y: s.y, vx: fireball.velocity.x, vy: fireball.velocity.y });
+          onLoseRef.current({ x: s.x, y: s.y, vx: fireball.velocity.x, vy: fireball.velocity.y });
         }
       }
 
@@ -167,7 +175,7 @@ export default function FireGameLevel({ onWin, onLose }: { onWin: (exit: FireExi
       ctx.save(); ctx.translate(W / 2 - camX, H / 2 - camY);
 
       for (const s of level.segments) {
-        if (s.invisible) continue; // Hides the ceiling line visually
+        if (s.invisible) continue;
         ctx.strokeStyle = s.climbable ? "rgba(122,178,255,.9)" : "rgba(158,164,170,.9)";
         ctx.lineWidth = s.climbable ? 5 : 4;
         ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
@@ -190,11 +198,16 @@ export default function FireGameLevel({ onWin, onLose }: { onWin: (exit: FireExi
       cancelAnimationFrame(raf);
       window.removeEventListener("keydown", onKeyDown); window.removeEventListener("keyup", onKeyUp); window.removeEventListener("resize", size);
       Matter.Events.off(engine, "beforeUpdate", onBeforeUpdate); Matter.Events.off(engine, "collisionStart", onCollisionStart);
-      Matter.World.clear(world, false); Matter.Engine.clear(engine);
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
+      Matter.Composite.clear(world, false); Matter.Engine.clear(engine);
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
     };
-  }, [onWin, onLose]);
+  }, []);
 
-  return <canvas ref={canvasRef} className="block h-full w-full" />;
+  return <canvas
+      ref={canvasRef}
+      role="img"
+      aria-label="Rebuild mini-game. Move with the arrow keys or A and D, jump with space or W."
+      className="block h-full w-full"
+    />;
 }
