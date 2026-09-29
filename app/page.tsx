@@ -38,7 +38,7 @@ export default function Home() {
               Built it with a site builder or an AI tool, and it feels slow or looks like everyone else&apos;s? Send it over. We&apos;ll rebuild it into something faster and clearly yours.
             </p>
             <Link href="/rebuild" className="inline-block rounded-md border border-ink bg-ink px-6 py-3 font-medium text-[#05070d] no-underline hover:border-acc hover:bg-acc">
-              Learn more
+              See how a rebuild works
             </Link>
           </div>
         </section>
