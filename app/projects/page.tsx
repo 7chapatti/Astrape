@@ -10,10 +10,9 @@ export const metadata: Metadata = {
 export default function Projects() {
   return (
     <>
-      <Nav active="/projects" />
-      <main>
-      <div className="mx-auto max-w-[1080px] px-5 sm:px-8">
-        <section className="py-[clamp(80px,13vw,140px)] pb-[clamp(48px,7vw,72px)]">
+      <Nav />
+      <main id="main-content">
+      <section className="mx-auto max-w-[1080px] px-5 sm:px-8 py-[clamp(80px,13vw,140px)] pb-[clamp(48px,7vw,72px)]">
           <h1 className="mb-4 max-w-[16ch] font-display text-[clamp(2.6rem,6vw,4.2rem)] font-extrabold leading-[1.05] tracking-tight">
             Some of what we&apos;ve built
           </h1>
@@ -21,13 +20,12 @@ export default function Projects() {
             A mix of shipped work and earlier projects that show how we approach a build, end to end.
           </p>
         </section>
-      </div>
 
       <section className="border-t border-line bg-[#070b14] py-[clamp(56px,9vw,100px)]" aria-labelledby="studyflow-h">
         <article className="mx-auto max-w-[1080px] px-5 sm:px-8">
           <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4">
             <h2 id="studyflow-h" className="m-0 font-display text-[clamp(1.9rem,4vw,2.6rem)] font-bold leading-tight tracking-tight">StudyFlow</h2>
-            <span className="whitespace-nowrap rounded-[5px] border border-line px-3 py-1 text-sm text-acc">Live</span>
+            <p className="m-0 whitespace-nowrap rounded-[5px] border border-line px-3 py-1 text-sm text-acc">Live</p>
           </div>
           <p className="mb-9 max-w-[52ch] text-[1.08rem] text-mute">
             A study planning app that helps university students actually stick to a schedule, instead of just writing one down and abandoning it.
@@ -57,7 +55,7 @@ export default function Projects() {
         <article className="mx-auto max-w-[1080px] px-5 sm:px-8">
           <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4">
             <h2 id="vaultdrop-h" className="m-0 font-display text-[clamp(1.9rem,4vw,2.6rem)] font-bold leading-tight tracking-tight">VaultDrop</h2>
-            <span className="whitespace-nowrap rounded-[5px] border border-line px-3 py-1 text-sm text-mute">University project</span>
+            <p className="m-0 whitespace-nowrap rounded-[5px] border border-line px-3 py-1 text-sm text-mute">University project</p>
           </div>
           <p className="max-w-[52ch] text-mute">
             An encrypted file-sharing platform built for a university course, designed so that even the platform itself can&apos;t read the files being shared. It included automatic detection of unusual account activity, and went through a full UI redesign partway through to make it feel calmer and more trustworthy to use.
