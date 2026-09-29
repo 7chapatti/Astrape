@@ -7,8 +7,13 @@
 }
 
 html {
-  scroll-behavior: smooth;
   scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -19,23 +24,4 @@ body {
 :focus-visible {
   outline: 2px solid #7aa2ff;
   outline-offset: 3px;
-}
-
-/* Idle flicker for the resting flaming-© badge (FireBadge) — a small,
-   steady pulse, never growing past its resting size (see project notes on
-   the flame ceiling). */
-@keyframes fire-flicker {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.88;
-    transform: scale(1.04);
-  }
-}
-.animate-fire-flicker {
-  display: inline-block;
-  animation: fire-flicker 1.8s ease-in-out infinite;
 }
