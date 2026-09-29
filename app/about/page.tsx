@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 export default function About() {
   return (
     <>
-      <Nav active="/about" />
-      <main>
+      <Nav />
+      <main id="main-content">
       <div className="mx-auto max-w-[720px] px-5 sm:px-8">
         <section className="py-[clamp(80px,13vw,140px)] pb-[clamp(40px,6vw,64px)]">
           <h1 className="mb-5 max-w-[14ch] font-display text-[clamp(2.6rem,6vw,4rem)] font-extrabold leading-[1.06] tracking-tight">
@@ -23,7 +23,7 @@ export default function About() {
         </section>
 
         <section className="border-t border-line py-[clamp(48px,8vw,84px)]">
-          <div className="mb-1 font-display text-[3.2rem] font-extrabold tracking-tight text-acc">Ἀστραπή</div>
+          <p lang="grc" className="mb-1 font-display text-[3.2rem] font-extrabold tracking-tight text-acc">Ἀστραπή</p>
           <p className="mb-6 text-mute">Astrapē — Greek for &quot;lightning.&quot;</p>
           <p className="m-0 leading-[1.7]">
             The name comes from the moment a strike actually happens: fast, sudden, and impossible not to notice. That&apos;s the standard we build to. A site should load the instant someone taps it, and it should look like nothing they&apos;ve seen from a builder before — not a slow, generic imitation of a real business, but the real thing.
