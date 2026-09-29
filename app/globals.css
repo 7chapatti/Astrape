@@ -8,6 +8,7 @@
 
 html {
   scroll-padding-top: env(safe-area-inset-top, 0px);
+  background: #04060b;
 }
 
 @media (prefers-reduced-motion: no-preference) {
