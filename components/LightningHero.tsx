@@ -12,15 +12,14 @@ export default function LightningHero() {
   const phaseRef = useRef<FireGamePhase>(fireGame.phase);
   const outcomeRef = useRef<FireGameOutcome | null>(fireGame.outcome);
   
-  // Track mobile state to completely lock game interactions
   const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     phaseRef.current = fireGame.phase;
     outcomeRef.current = fireGame.outcome;
   }, [fireGame.phase, fireGame.outcome]);
 
-  // Handle window resizing for mobile lockout
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -47,7 +46,6 @@ export default function LightningHero() {
     let W = 0, H = 0, DPR = 1;
     let layers: { c: any; img: HTMLCanvasElement }[] = [];
     
-    // Store user preference separately so we can toggle it on/off based on screen size
     let userFxPref = !matchMedia("(prefers-reduced-motion: reduce)").matches;
     let fxEnabled = userFxPref && window.innerWidth >= 768;
     
@@ -121,7 +119,6 @@ export default function LightningHero() {
       }
       S.globalAlpha = 1;
 
-      // Only draw flames if effects are allowed (desktop & toggled on)
       if (fxEnabled) {
           if (phaseRef.current === "ambient" || phaseRef.current === "burning" || phaseRef.current === "engulfed") {
             if (burnEmbers.length > 0) drawEmbers();
@@ -142,7 +139,6 @@ export default function LightningHero() {
          
          const cx = rect.left + rect.width * 0.48; 
          const cy = rect.top + rect.height * 0.52; 
-         
          const ringRadius = rect.width * 0.34; 
          
          for (let k = 0; k < 2; k++) {
@@ -376,7 +372,6 @@ export default function LightningHero() {
         clearTimeout(rz); 
         rz = setTimeout(() => { 
             size(); 
-            // If resized into mobile view, halt active lightning 
             const wasEnabled = fxEnabled;
             fxEnabled = userFxPref && window.innerWidth >= 768;
             if (!fxEnabled && wasEnabled) {
@@ -415,7 +410,7 @@ export default function LightningHero() {
               </Link>
             </div>
             
-            {/* Nav list is entirely hidden on mobile via Tailwind's `hidden sm:flex` */}
+            {/* Desktop Navigation */}
             <ul className="hidden items-center gap-7 sm:flex m-0 p-0 list-none">
               <li>
                 <Link href="/services" className="text-[.95rem] font-medium text-mute hover:text-ink">Services</Link>
@@ -438,8 +433,62 @@ export default function LightningHero() {
                 </button>
               </li>
             </ul>
+
+            {/* Mobile Hamburger Button */}
+            <button 
+              type="button" 
+              className="sm:hidden text-mute hover:text-ink focus:outline-none"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
         </nav>
+
+        {/* Mobile Full-Screen Menu Overlay */}
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-[100] flex flex-col bg-bg px-5 py-6 sm:hidden animate-in fade-in duration-200">
+            <div className="flex items-center justify-between">
+              <Link 
+                href="/" 
+                className="font-display text-[1.35rem] font-bold tracking-tight text-ink no-underline"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Astrape
+              </Link>
+              <button 
+                type="button" 
+                className="text-mute hover:text-ink focus:outline-none"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close menu"
+              >
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <ul className="mt-16 flex flex-col items-center gap-8 text-[1.1rem] font-medium text-mute list-none p-0">
+              <li>
+                <Link href="/services" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>Services</Link>
+              </li>
+              <li>
+                <Link href="/rebuild" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>Rebuild</Link>
+              </li>
+              <li>
+                <Link href="/projects" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>Projects</Link>
+              </li>
+              <li>
+                <Link href="/about" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>About</Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-ink" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+              </li>
+            </ul>
+          </div>
+        )}
 
         <section aria-labelledby="hero-title" className="flex flex-1 flex-col items-center justify-center px-6 pb-[8vh] text-center">
           <div
@@ -518,7 +567,6 @@ export default function LightningHero() {
       
       <canvas ref={fxRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-[61] block h-full w-full" />
       
-      {/* Do not even mount the game layout on mobile devices */}
       {!isMobile && (fireGame.phase === "collapsing" || fireGame.phase === "playing" || fireGame.phase === "winning" || fireGame.phase === "losing") && (
         <FireGameOverlay state={fireGame} dispatch={fireGameDispatch} />
       )}
