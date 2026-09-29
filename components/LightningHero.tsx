@@ -21,6 +21,8 @@ const LAYER_CFG = [
 ];
 type LayerCfg = (typeof LAYER_CFG)[number];
 
+const inertProps = (on: boolean) => (on ? { inert: true } : {});
+
 export default function LightningHero() {
   const { state: fireGame, dispatch: fireGameDispatch } = useFireGame();
 
@@ -29,7 +31,6 @@ export default function LightningHero() {
 
   const [isMobile, setIsMobile] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  // Starts true on the server and client so hydration matches; reduced-motion is applied in an effect below.
   const [fxOn, setFxOn] = useState(true);
 
   const heroRef = useRef<HTMLElement>(null);
@@ -45,7 +46,6 @@ export default function LightningHero() {
     outcomeRef.current = fireGame.outcome;
   }, [fireGame.phase, fireGame.outcome]);
 
-  // Viewport breakpoint. Also closes the mobile menu if the window grows past it.
   useEffect(() => {
     const check = () => {
       const mobile = window.innerWidth < 768;
@@ -57,12 +57,10 @@ export default function LightningHero() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Respect reduced-motion after mount (avoids a hydration mismatch on the toggle label).
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setFxOn(false);
   }, []);
 
-  // Mobile menu: lock scroll (without shifting layout), Escape to close, focus handling.
   useEffect(() => {
     if (!menuOpen) return;
     const body = document.body;
@@ -182,7 +180,6 @@ export default function LightningHero() {
       }
     }
 
-    // Particle motion is scaled by frame time so speed is the same on 60Hz and 120Hz displays.
     function stepFlame(f: (typeof flames)[number]) {
       f.life += frameDt;
       f.x += f.vx * frameDt * 60;
@@ -443,8 +440,6 @@ export default function LightningHero() {
       window.removeEventListener("resize", onResize);
       toggleFxRef.current = null;
     };
-    // fireGameDispatch is stable; the loop reads game state through refs.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const phase = fireGame.phase;
@@ -467,7 +462,7 @@ export default function LightningHero() {
         */}
         <nav
           aria-label="Main"
-          className="relative flex min-h-[4.5rem] items-center justify-between px-5 py-3 sm:px-8 max-md:z-[1000]"
+          className="relative flex min-h-[4.75rem] items-center justify-between px-5 py-3 sm:px-8 max-md:z-[1000]"
         >
           <Link
             href="/"
@@ -481,7 +476,7 @@ export default function LightningHero() {
           <ul
             id="primary-menu"
             ref={menuRef}
-            inert={menuHidden}
+            {...inertProps(menuHidden)}
             className={`m-0 flex list-none items-center p-0 md:gap-7
               max-md:fixed max-md:inset-0 max-md:z-0 max-md:flex-col max-md:justify-center max-md:gap-8 max-md:bg-[#03040a]
               max-md:transition-[opacity,visibility] max-md:duration-300 max-md:ease-out motion-reduce:max-md:transition-none
@@ -583,9 +578,9 @@ export default function LightningHero() {
             </button>
           </div>
 
-          {/* Wrapper needed so the whole intro can fade as one; inert stops hidden links being tabbable (React 19). */}
+          {/* Wrapper needed so the whole intro can fade as one; inert stops hidden links being tabbable. */}
           <div
-            inert={!introVisible}
+            {...inertProps(!introVisible)}
             className={`mt-4 flex flex-col items-center gap-8 transition-all duration-700 ease-in-out motion-reduce:transition-none ${
               introVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-6 opacity-0"
             }`}
