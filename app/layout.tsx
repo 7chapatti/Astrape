@@ -3,16 +3,9 @@ import { Bricolage_Grotesque, Figtree } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
 
-const display = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-display",
-});
-const body = Figtree({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-body",
-});
+const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-display" });
+  
+const body = Figtree({ subsets: ["latin"], variable: "--font-body" });
 
 export const metadata: Metadata = {
   title: "Astrape",
