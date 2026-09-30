@@ -2,7 +2,7 @@ import Link from "next/link";
 import LightningHero from "@/components/LightningHero";
 
 const SERVICES = [
-  { h: "Instant loading", p: "Pages appear as you tap. Fast sites keep visitors around, and search engines notice." },
+  { h: "Lightning-fast loading", p: "Pages load in a flash. Fast sites keep visitors around, and search engines notice." },
   { h: "Custom design", p: "No templates. Every layout is drawn around your brand and the people you want to reach." },
   { h: "Built to be found", p: "Clean structure and quick pages that search engines can read without struggling." },
   { h: "Live in days", p: "Once you approve the design, we move quickly. Most sites launch in days, not months." },
@@ -38,7 +38,7 @@ export default function Home() {
               Built it with a site builder or an AI tool, and it feels slow or looks like everyone else&apos;s? Send it over. We&apos;ll rebuild it into something faster and clearly yours.
             </p>
             <Link href="/rebuild" className="inline-block rounded-md border border-ink bg-ink px-6 py-3 font-medium text-[#05070d] no-underline hover:border-acc hover:bg-acc">
-              See how a rebuild works
+              Learn more
             </Link>
           </div>
         </section>
