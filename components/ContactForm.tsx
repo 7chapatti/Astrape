@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { supabase, supabaseConfigured } from "@/lib/supabase";
+
+const loadSupabase = () => import("@/lib/supabase");
+const SUPABASE_CONFIGURED = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 const MAX = { name: 100, business: 150, email: 254, site: 300, message: 5000 } as const;
 
@@ -16,12 +18,11 @@ export default function ContactForm() {
     e.preventDefault();
     if (status === "sending") return;
     const fd = new FormData(e.currentTarget);
-
     if (fd.get("contact_extra")) {
       setStatus("done");
       return;
     }
-    if (!supabaseConfigured) {
+    if (!SUPABASE_CONFIGURED) {
       setStatus("error");
       return;
     }
@@ -37,6 +38,7 @@ export default function ContactForm() {
     };
 
     try {
+      const { supabase } = await loadSupabase();
       const { error } = await supabase.from("contact_submissions").insert(payload);
       setStatus(error ? "error" : "done");
     } catch {
@@ -56,7 +58,7 @@ export default function ContactForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 pb-[clamp(64px,10vw,110px)]">
+    <form onSubmit={onSubmit} onFocus={() => void loadSupabase()} className="grid gap-6 pb-[clamp(64px,10vw,110px)]">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <Field label="Name" id="name" name="name" autoComplete="name" maxLength={MAX.name} required />
         <Field label="Business name" id="business" name="business" autoComplete="organization" maxLength={MAX.business} optional />
@@ -94,7 +96,7 @@ export default function ContactForm() {
       </button>
       {status === "error" && (
         <p role="alert" className="m-0 text-sm text-mute">
-          {supabaseConfigured
+          {SUPABASE_CONFIGURED
             ? "Something went wrong sending that — mind trying again in a moment?"
             : "This form isn't connected yet — add your Supabase keys to .env.local (see the README)."}
         </p>
