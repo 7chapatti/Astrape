@@ -110,6 +110,7 @@ export default function LightningHero() {
     let fxEnabled = userFxPref && window.innerWidth >= 768;
 
     let flash = 0, strikeAt = -99, bolts: number[][] = [], hit = { x: 0, y: 0 }, visible = true;
+    // When nothing is animating (mobile, or effects off) the scene is painted once, not every frame.
     let drewOnce = false;
     let frameDt = 1 / 60;
 
@@ -347,7 +348,9 @@ export default function LightningHero() {
       }
     }
 
-    size();
+    let ready = false;
+    let initRaf = 0;
+    let initTimer: ReturnType<typeof setTimeout> | undefined;
     const t0 = performance.now() / 1000;
     let nextAmb = t0 + rnd(1, 2.5);
 
@@ -426,11 +429,17 @@ export default function LightningHero() {
     }
 
     const wake = () => {
-      if (raf) return;
+      if (!ready || raf) return;
       lastFrameNow = performance.now() / 1000;
       raf = requestAnimationFrame(frame);
     };
-    raf = requestAnimationFrame(frame);
+    initRaf = requestAnimationFrame(() => {
+      initTimer = setTimeout(() => {
+        size();
+        ready = true;
+        raf = requestAnimationFrame(frame);
+      }, 0);
+    });
     const io = new IntersectionObserver((e) => (visible = e[0].isIntersecting));
     io.observe(hero);
 
@@ -458,6 +467,8 @@ export default function LightningHero() {
 
     return () => {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(initRaf);
+      clearTimeout(initTimer);
       clearTimeout(rz);
       io.disconnect();
       window.removeEventListener("resize", onResize);
@@ -610,7 +621,7 @@ export default function LightningHero() {
           >
             <hgroup className="flex max-w-2xl flex-col items-center gap-3">
               <h2 className="m-0 text-[clamp(1.4rem,3vw,2rem)] font-semibold tracking-tight text-ink">
-                Custom websites that load instantly.
+                Lightning-fast custom websites.
               </h2>
               <p className="m-0 text-[clamp(1rem,1.2vw,1.1rem)] text-mute">
                 A web studio for businesses that want a site nobody mistakes for a template.
