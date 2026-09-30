@@ -1,10 +1,12 @@
 "use client";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import FireGameOverlay from "./fire-game/FireGameOverlay";
 import { useFireGame } from "@/hooks/useFireGame";
 import { AMBIENT_STRIKE_INTERVAL_S, DWELL_THRESHOLD_S, MAX_LOGO_BURN } from "@/lib/fire-game/constants";
 import type { FireGamePhase, FireGameOutcome } from "@/lib/fire-game/types";
+
+const FireGameOverlay = dynamic(() => import("./fire-game/FireGameOverlay"), { ssr: false });
 
 const NAV_LINKS = [
   { href: "/services", label: "Services" },
@@ -20,6 +22,7 @@ const LAYER_CFG = [
   { b: 0.98, h: [0.4, 0.62], s: 0.075, lit: "#232e56", w: 3.4, k: 0.4, base: 0.02, edge: 1 },
 ];
 type LayerCfg = (typeof LAYER_CFG)[number];
+
 const inertProps = (on: boolean) => (on ? { inert: true } : {});
 
 export default function LightningHero() {
@@ -86,6 +89,10 @@ export default function LightningHero() {
   }, [menuOpen]);
 
   useEffect(() => {
+    if (fireGame.phase === "burning" || fireGame.phase === "engulfed") void import("./fire-game/FireGameOverlay");
+  }, [fireGame.phase]);
+
+  useEffect(() => {
     toggleFxRef.current?.(fxOn);
   }, [fxOn]);
 
@@ -103,6 +110,7 @@ export default function LightningHero() {
     let fxEnabled = userFxPref && window.innerWidth >= 768;
 
     let flash = 0, strikeAt = -99, bolts: number[][] = [], hit = { x: 0, y: 0 }, visible = true;
+    let drewOnce = false;
     let frameDt = 1 / 60;
 
     let dwellAccum = 0, burnAmount = 0;
@@ -146,6 +154,7 @@ export default function LightningHero() {
     }
 
     function size() {
+      drewOnce = false;
       DPR = Math.min(devicePixelRatio || 1, 1.5);
       W = hero.clientWidth; H = hero.clientHeight;
       for (const c of [sc, fx]) { c.width = W * DPR; c.height = H * DPR; }
@@ -351,6 +360,14 @@ export default function LightningHero() {
       lastFrameNow = now;
       frameDt = Math.min(0.05, dt || 1 / 60);
 
+      const idle = !fxEnabled && flash < 0.01 && bolts.length === 0;
+      if (idle && drewOnce) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+        return;
+      }
+      drewOnce = idle;
+
       const phase = phaseRef.current;
       if (phase === "playing" || phase === "collapsing") {
         burnAmount = 0;
@@ -408,6 +425,11 @@ export default function LightningHero() {
       F.globalCompositeOperation = "source-over";
     }
 
+    const wake = () => {
+      if (raf) return;
+      lastFrameNow = performance.now() / 1000;
+      raf = requestAnimationFrame(frame);
+    };
     raf = requestAnimationFrame(frame);
     const io = new IntersectionObserver((e) => (visible = e[0].isIntersecting));
     io.observe(hero);
@@ -420,6 +442,7 @@ export default function LightningHero() {
         const wasEnabled = fxEnabled;
         fxEnabled = userFxPref && window.innerWidth >= 768;
         if (!fxEnabled && wasEnabled) { bolts = []; strikeAt = -99; }
+        wake();
       }, 200);
     };
     window.addEventListener("resize", onResize);
@@ -427,8 +450,10 @@ export default function LightningHero() {
     toggleFxRef.current = (on: boolean) => {
       userFxPref = on;
       fxEnabled = userFxPref && window.innerWidth >= 768;
+      drewOnce = false;
       if (!fxEnabled) { bolts = []; strikeAt = -99; }
       else { nextAmb = performance.now() / 1000 + 1.5; }
+      wake();
     };
 
     return () => {
@@ -614,7 +639,7 @@ export default function LightningHero() {
         </section>
       </div>
 
-      <canvas ref={fxRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-[61] block h-full w-full" />
+      <canvas ref={fxRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-[61] block h-full w-full max-md:hidden" />
 
       {!isMobile && (phase === "collapsing" || phase === "playing" || phase === "winning" || phase === "losing") && (
         <FireGameOverlay state={fireGame} dispatch={fireGameDispatch} />
