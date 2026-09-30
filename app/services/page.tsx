@@ -5,7 +5,7 @@ import Nav from "@/components/Nav";
 export const metadata: Metadata = {
   title: "Services — Astrape",
   description:
-    "Custom design, instant loading, security, and visibility across search and AI assistants — what's included on every site Astrape builds.",
+    "Custom design, lightning-fast loading, security, and visibility across search and AI assistants — what's included on every site Astrape builds.",
 };
 
 const VISIBILITY = [
@@ -16,7 +16,7 @@ const VISIBILITY = [
 
 const ROWS = [
   { h: "Custom design", p: "Every layout is drawn around your business and the people you're trying to reach — nothing pulled from a shared template library." },
-  { h: "Instant loading", p: "Pages appear the moment you tap. Nothing waits on scripts your visitor doesn't need." },
+  { h: "Lightning-fast loading", p: "Pages load in a flash. Nothing waits on scripts your visitor doesn't need." },
   { h: "Secure by default", p: "Encrypted connections and properly handled data as standard, not something bolted on afterward." },
   { h: "Reliable hosting", p: "Your site runs on infrastructure built for uptime and speed worldwide, not a shared server that slows down under load." },
   { h: "Room to grow", p: "Accounts, bookings, payments, dashboards — the foundation supports adding real functionality later without a rebuild." },
