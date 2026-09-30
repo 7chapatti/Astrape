@@ -17,9 +17,9 @@ const NAV_LINKS = [
 ] as const;
 
 const LAYER_CFG = [
-  { b: 0.8, h: [0.16, 0.26], s: 0.022, lit: "#5b76b8", w: 1.6, k: 1, base: 0.05, edge: 0 },
-  { b: 0.88, h: [0.26, 0.4], s: 0.04, lit: "#3d4f8c", w: 2.4, k: 0.65, base: 0.035, edge: 0 },
-  { b: 0.98, h: [0.4, 0.62], s: 0.075, lit: "#232e56", w: 3.4, k: 0.4, base: 0.02, edge: 1 },
+  { b: 0.8, h: [0.16, 0.26], s: 0.022, col: "#5e4632", lit: "#5b76b8", w: 1.6, k: 1, base: 0.4, edge: 0 },
+  { b: 0.88, h: [0.26, 0.4], s: 0.04, col: "#553a27", lit: "#3d4f8c", w: 2.4, k: 0.85, base: 0.6, edge: 0 },
+  { b: 0.98, h: [0.4, 0.62], s: 0.075, col: "#47301f", lit: "#232e56", w: 3.4, k: 0.75, base: 0.9, edge: 1 },
 ];
 type LayerCfg = (typeof LAYER_CFG)[number];
 
@@ -104,54 +104,101 @@ export default function LightningHero() {
     const F = fx.getContext("2d")!;
 
     let W = 0, H = 0, DPR = 1;
-    let layers: { c: LayerCfg; img: HTMLCanvasElement }[] = [];
+    let layers: { c: LayerCfg; img: HTMLCanvasElement; lit: HTMLCanvasElement | null }[] = [];
 
     let userFxPref = true;
     let fxEnabled = userFxPref && window.innerWidth >= 768;
 
     let flash = 0, strikeAt = -99, bolts: number[][] = [], hit = { x: 0, y: 0 }, visible = true;
-    // When nothing is animating (mobile, or effects off) the scene is painted once, not every frame.
     let drewOnce = false;
     let frameDt = 1 / 60;
-
     let dwellAccum = 0, burnAmount = 0;
-    const burnEmbers: { x: number; y: number; born: number }[] = [];
+
+    interface Tree { x: number; base: number; h: number; layer: number; segs: number[][]; igAt: number }
+    interface FireBit { x: number; y: number; vx: number; vy: number; life: number; maxLife: number; size: number; kind: 0 | 1 | 2 }
+    let trees: Tree[] = [];
+    let burning: Tree[] = [];
+    const fireBits: FireBit[] = [];
+    let nextSpread = 0;
+    let sceneNow = 0;
     const flames: { x: number; y: number; vx: number; vy: number; life: number; maxLife: number; size: number }[] = [];
 
     const RGB = "120,160,255";
     const rnd = (a: number, b: number) => a + Math.random() * (b - a);
     const rng = (s: number) => () => (s = (s * 16807) % 2147483647) / 2147483647;
+    const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-    function limb(c: CanvasRenderingContext2D, x: number, y: number, len: number, ang: number, dep: number, r: () => number) {
+    function sprite(px: number, stops: [number, string][]) {
+      const c = document.createElement("canvas");
+      c.width = c.height = px;
+      const g = c.getContext("2d")!;
+      const rg = g.createRadialGradient(px / 2, px / 2, 0, px / 2, px / 2, px / 2);
+      for (const [o, col] of stops) rg.addColorStop(o, col);
+      g.fillStyle = rg;
+      g.fillRect(0, 0, px, px);
+      return c;
+    }
+    const SPR_HOT = sprite(64, [[0, "rgba(255,245,205,1)"], [0.22, "rgba(255,196,90,0.9)"], [0.6, "rgba(255,120,35,0.3)"], [1, "rgba(255,70,15,0)"]]);
+    const SPR_COOL = sprite(64, [[0, "rgba(255,170,70,0.8)"], [0.4, "rgba(232,85,25,0.45)"], [1, "rgba(150,25,0,0)"]]);
+    const SPR_LIGHT = sprite(128, [[0, "rgba(255,150,70,1)"], [0.5, "rgba(255,105,35,0.3)"], [1, "rgba(255,80,20,0)"]]);
+
+    type Pen = { moveTo(x: number, y: number): void; lineTo(x: number, y: number): void };
+
+    function limb(p: Pen, segs: number[][] | null, x: number, y: number, len: number, ang: number, dep: number, r: () => number) {
       if (dep > 4 || len < 4) return;
       const x2 = x + Math.cos(ang) * len, y2 = y + Math.sin(ang) * len;
-      c.moveTo(x, y); c.lineTo(x2, y2);
+      p.moveTo(x, y); p.lineTo(x2, y2);
+      segs?.push([x, y, x2, y2]);
       const n = dep === 0 ? 1 : r() < 0.75 ? 2 : 1;
-      for (let i = 0; i < n; i++) limb(c, x2, y2, len * (0.68 + r() * 0.14), ang + (r() - 0.5) * 1.1 - 0.15, dep + 1, r);
+      for (let i = 0; i < n; i++) limb(p, segs, x2, y2, len * (0.68 + r() * 0.14), ang + (r() - 0.5) * 1.1 - 0.15, dep + 1, r);
     }
 
-    function tree(c: CanvasRenderingContext2D, x: number, base: number, h: number, r: () => number, w: number) {
-      c.lineWidth = w;
-      c.moveTo(x, base); c.lineTo(x, base - h * 0.3);
+    function tree(p: Pen, segs: number[][] | null, x: number, base: number, h: number, r: () => number) {
+      p.moveTo(x, base); p.lineTo(x, base - h * 0.3);
+      segs?.push([x, base, x, base - h * 0.3]);
       const branches = 3 + ((r() * 2) | 0);
       for (let i = 0; i < branches; i++) {
-        limb(c, x, base - h * 0.3 * (i / (branches - 1 || 1)), h * (0.5 - (i / (branches - 1 || 1)) * 0.15), -Math.PI / 2 + (r() - 0.5) * 1.5, 0, r);
+        limb(p, segs, x, base - h * 0.3 * (i / (branches - 1 || 1)), h * (0.5 - (i / (branches - 1 || 1)) * 0.15), -Math.PI / 2 + (r() - 0.5) * 1.5, 0, r);
       }
     }
 
-    function build(cfg: LayerCfg, i: number) {
-      const c = document.createElement("canvas");
-      c.width = W * DPR; c.height = H * DPR;
-      const x = c.getContext("2d")!;
-      x.scale(DPR, DPR);
+    function build(cfg: LayerCfg, i: number, needLit: boolean) {
+      const mk = () => {
+        const c = document.createElement("canvas");
+        c.width = W * DPR; c.height = H * DPR;
+        const x = c.getContext("2d")!;
+        x.scale(DPR, DPR);
+        return { c, x };
+      };
+      const brown = mk();
+      const lit = needLit ? mk() : null;
       const r = rng(1000 + i * 77), base = H * cfg.b;
-      x.strokeStyle = cfg.lit; x.lineCap = "round"; x.beginPath();
+      const path = new Path2D();
+      const out: Tree[] = [];
       for (let px = -10; px < W + 30; px += W * cfg.s * (0.7 + r() * 0.7)) {
         if (cfg.edge && Math.abs(px - W / 2) < W * 0.28 && r() < 0.9) continue;
-        tree(x, px, base, H * (cfg.h[0] + r() * (cfg.h[1] - cfg.h[0])), r, cfg.w);
+        const h = H * (cfg.h[0] + r() * (cfg.h[1] - cfg.h[0]));
+        const segs: number[][] | null = needLit ? [] : null;
+        tree(path, segs, px, base, h, r);
+        if (segs) out.push({ x: px, base, h, layer: i, segs, igAt: -1 });
       }
-      x.stroke();
-      return c;
+
+      const gr = rng(5000 + i * 31);
+      const ground = new Path2D();
+      ground.moveTo(-10, H);
+      for (let gx = -10; gx <= W + 30; gx += W / 16) ground.lineTo(gx, base + gr() * H * 0.012);
+      ground.lineTo(W + 30, H);
+      ground.closePath();
+
+      for (const [t, col] of [[brown, cfg.col], [lit, cfg.lit]] as const) {
+        if (!t) continue;
+        t.x.fillStyle = col;
+        t.x.fill(ground);
+        t.x.strokeStyle = col; t.x.lineWidth = cfg.w; t.x.lineCap = "round";
+        t.x.stroke(path);
+      }
+      return { img: brown.c, lit: lit ? lit.c : null, trees: out };
     }
 
     function size() {
@@ -160,7 +207,16 @@ export default function LightningHero() {
       W = hero.clientWidth; H = hero.clientHeight;
       for (const c of [sc, fx]) { c.width = W * DPR; c.height = H * DPR; }
       S.setTransform(DPR, 0, 0, DPR, 0, 0); F.setTransform(DPR, 0, 0, DPR, 0, 0);
-      layers = LAYER_CFG.map((c, i) => ({ c, img: build(c, i) }));
+
+      const needLit = window.innerWidth >= 768;
+      const built = LAYER_CFG.map((c, i) => ({ c, ...build(c, i, needLit) }));
+      const old = trees;
+      layers = built.map((b) => ({ c: b.c, img: b.img, lit: b.lit }));
+      trees = built.flatMap((b) => b.trees);
+
+      if (old.length === trees.length) trees.forEach((t, i) => { t.igAt = old[i].igAt; });
+      burning = trees.filter((t) => t.igAt >= 0);
+      fireBits.length = 0;
     }
 
     function drawScene() {
@@ -172,16 +228,19 @@ export default function LightningHero() {
         S.fillStyle = rg; S.fillRect(0, 0, W, H);
       }
       for (const L of layers) {
-        S.globalAlpha = Math.min(1, L.c.base + flash * L.c.k);
+        S.globalAlpha = L.c.base;
         S.drawImage(L.img, 0, 0, W, H);
+        if (L.lit && flash > 0.01) {
+          S.globalAlpha = Math.min(1, flash * L.c.k);
+          S.drawImage(L.lit, 0, 0, W, H);
+        }
       }
       S.globalAlpha = 1;
 
       if (fxEnabled) {
         const phase = phaseRef.current;
         if (phase === "ambient" || phase === "burning" || phase === "engulfed") {
-          if (burnEmbers.length > 0) drawEmbers();
-          drawRealFlames();
+          drawFire();
         } else if (phase === "resolved" && outcomeRef.current === "won") {
           drawWinFlames();
         }
@@ -243,84 +302,114 @@ export default function LightningHero() {
       S.restore();
     }
 
-    function drawEmbers() {
-      const now = performance.now() / 1000;
-      S.save();
-      S.globalCompositeOperation = "lighter";
-      for (const e of burnEmbers) {
-        const age = now - e.born;
-        const grow = Math.min(1, age / 1.4);
-        const flicker = 0.75 + 0.25 * Math.sin(now * 9 + e.x);
-        const r = (10 + 6 * grow) * flicker;
-        const rg = S.createRadialGradient(e.x, e.y, 0, e.x, e.y, r);
-        rg.addColorStop(0, `rgba(255,214,140,${0.85 * grow * flicker})`);
-        rg.addColorStop(0.5, `rgba(255,120,40,${0.45 * grow * flicker})`);
-        rg.addColorStop(1, "rgba(255,60,20,0)");
-        S.fillStyle = rg;
-        S.beginPath();
-        S.arc(e.x, e.y, r, 0, Math.PI * 2);
-        S.fill();
-      }
-      S.restore();
+    const burnNorm = () => Math.min(1, burnAmount / MAX_LOGO_BURN);
+    const treeIntensity = (t: Tree) => clamp01((sceneNow - t.igAt) / 3) * (0.45 + 0.55 * burnNorm());
+
+    function ignite(t: Tree, now: number) {
+      if (t.igAt >= 0) return;
+      t.igAt = now;
+      burning.push(t);
     }
 
-    function drawRealFlames() {
-      if (burnEmbers.length === 0) return;
-      S.save();
-      S.globalCompositeOperation = "lighter";
+    function clearTreeFire() {
+      for (const t of trees) t.igAt = -1;
+      burning = [];
+      fireBits.length = 0;
+    }
 
-      const normalizedBurn = Math.min(1, burnAmount / MAX_LOGO_BURN);
-      const fireTargetY = H * 0.8 - H * 0.4 * normalizedBurn;
+    function pickStrike(): { x: number; y: number; tree: Tree | null } {
+      if (!trees.length) return { x: W * rnd(0.12, 0.88), y: H * rnd(0.7, 0.82), tree: null };
+      const t = trees[Math.floor(Math.random() * trees.length)];
+      let top = Infinity;
+      for (const sg of t.segs) top = Math.min(top, sg[1], sg[3]);
+      const limit = top + (t.base - top) * 0.3;
+      const crown = t.segs.filter((sg) => sg[3] < limit);
+      const pick = crown.length ? crown[Math.floor(Math.random() * crown.length)] : t.segs[t.segs.length - 1];
+      return { x: pick[2], y: pick[3], tree: t };
+    }
 
-      const spawnRate = 1 + normalizedBurn * 3;
+    function updateFire(now: number, dt: number) {
+      const norm = burnNorm();
+      const target = Math.max(1, Math.round(trees.length * (0.03 + 0.97 * Math.pow(norm, 1.15))));
+      if (burning.length > 0 && burning.length < target && now > nextSpread) {
+        const from = burning[Math.floor(Math.random() * burning.length)];
+        let best: Tree | null = null, bestD = Infinity;
+        for (const t of trees) {
+          if (t.igAt >= 0) continue;
+          const d = Math.abs(t.x - from.x) + Math.abs(t.layer - from.layer) * W * 0.04 + Math.random() * W * 0.02;
+          if (d < bestD) { bestD = d; best = t; }
+        }
+        if (best) ignite(best, now);
+        nextSpread = now + rnd(0.6, 1.6);
+      }
 
-      for (let i = 0; i < spawnRate; i++) {
-        if (Math.random() > 0.4) {
-          let spawnX = rnd(0, W);
-          let spawnY = H * 0.8 + rnd(-10, 20);
-
-          if (burnEmbers.length > 0 && Math.random() > normalizedBurn * 0.5) {
-            const ember = burnEmbers[Math.floor(Math.random() * burnEmbers.length)];
-            const spread = 15 + normalizedBurn * (W * 0.4);
-            spawnX = ember.x + rnd(-spread, spread);
-            spawnY = ember.y + rnd(-5, 15);
+      for (const t of burning) {
+        if (fireBits.length > 650) break;
+        const I = treeIntensity(t);
+        if (I <= 0.01) continue;
+        const depth = 0.7 + 0.3 * t.layer;
+        const n = (5 + 10 * I) * dt;
+        let k = Math.floor(n);
+        if (Math.random() < n - k) k++;
+        for (let i = 0; i < k; i++) {
+          const roll = Math.random();
+          if (roll < 0.1) {
+            // spark
+            const sg = t.segs[Math.floor(Math.random() * t.segs.length)];
+            fireBits.push({ x: sg[2], y: sg[3], vx: rnd(-30, 30), vy: -rnd(50, 120), life: 0, maxLife: rnd(0.9, 1.8), size: rnd(1.2, 2.2), kind: 2 });
+          } else if (roll < 0.35) {
+            fireBits.push({
+              x: t.x + rnd(-1, 1) * (18 + 50 * I) * depth,
+              y: t.base + rnd(-3, 4),
+              vx: rnd(-10, 10), vy: -rnd(25, 55) * depth,
+              life: 0, maxLife: rnd(0.35, 0.7), size: rnd(4, 8) * depth * (1 + norm * 0.5), kind: 1,
+            });
+          } else {
+            const sg = t.segs[Math.floor(Math.random() * t.segs.length)];
+            const u = Math.random();
+            fireBits.push({
+              x: lerp(sg[0], sg[2], u), y: lerp(sg[1], sg[3], u),
+              vx: rnd(-12, 12) * depth, vy: -rnd(35, 80) * (0.6 + norm * 0.8) * depth,
+              life: 0, maxLife: rnd(0.35, 0.75), size: rnd(4, 9) * depth * (1 + norm * 0.5), kind: 0,
+            });
           }
-
-          if (spawnX < 0 || spawnX > W) continue;
-
-          const fireIntensity = 0.2 + normalizedBurn * 1.5;
-
-          flames.push({
-            x: spawnX,
-            y: spawnY,
-            vx: rnd(-1, 1) * fireIntensity,
-            vy: rnd(-2, -5) * fireIntensity - normalizedBurn * 2,
-            life: 0,
-            maxLife: rnd(0.4, 0.8) + normalizedBurn * 0.8,
-            size: rnd(20, 35) + normalizedBurn * 60,
-          });
         }
       }
 
-      for (let i = flames.length - 1; i >= 0; i--) {
-        const f = flames[i];
-        stepFlame(f);
+      for (let i = fireBits.length - 1; i >= 0; i--) {
+        const b = fireBits[i];
+        b.life += dt;
+        if (b.life >= b.maxLife) { fireBits[i] = fireBits[fireBits.length - 1]; fireBits.pop(); continue; }
+        b.x += (b.vx + Math.sin(b.life * 9 + b.x) * 8) * dt;
+        b.y += b.vy * dt;
+      }
+    }
 
-        if (f.life >= f.maxLife || f.y < fireTargetY - 40) { flames.splice(i, 1); continue; }
+    function drawFire() {
+      if (burning.length === 0) return;
+      S.save();
+      S.globalCompositeOperation = "lighter";
 
-        const progress = f.life / f.maxLife;
-        const alpha = Math.max(0, 1 - Math.pow(progress, 1.5));
-        const currentSize = f.size * (1 - progress * 0.3);
+      for (const t of burning) {
+        const I = treeIntensity(t);
+        if (I <= 0.01) continue;
+        const flick = 0.85 + 0.15 * Math.sin(sceneNow * 11 + t.x * 0.37);
+        const R = 30 + 0.14 * t.h + 45 * I;
+        S.globalAlpha = 0.17 * I * flick;
+        S.drawImage(SPR_LIGHT, t.x - R, t.base - t.h * 0.3 - R, R * 2, R * 2);
+        S.drawImage(SPR_LIGHT, t.x - R, t.base - t.h * 0.6 - R, R * 2, R * 2);
+      }
 
-        const rg = S.createRadialGradient(f.x, f.y, 0, f.x, f.y, currentSize);
-        rg.addColorStop(0, `rgba(255, 200, 80, ${alpha * 0.7})`);
-        rg.addColorStop(0.5, `rgba(255, 80, 10, ${alpha * 0.4})`);
-        rg.addColorStop(1, "rgba(255, 0, 0, 0)");
-
-        S.fillStyle = rg;
-        S.beginPath();
-        S.arc(f.x, f.y, currentSize, 0, Math.PI * 2);
-        S.fill();
+      for (const b of fireBits) {
+        const prog = b.life / b.maxLife;
+        const s = b.size * (1 - prog * 0.5);
+        if (b.kind === 2) {
+          S.globalAlpha = 0.9 * (1 - prog);
+          S.drawImage(SPR_HOT, b.x - s, b.y - s, s * 2, s * 2);
+        } else {
+          S.globalAlpha = 0.8 * (1 - prog * prog);
+          S.drawImage(prog < 0.35 ? SPR_HOT : SPR_COOL, b.x - s * 0.8, b.y - s * 2.4, s * 1.6, s * 3.2);
+        }
       }
       S.restore();
     }
@@ -374,25 +463,21 @@ export default function LightningHero() {
       const phase = phaseRef.current;
       if (phase === "playing" || phase === "collapsing") {
         burnAmount = 0;
-        burnEmbers.length = 0;
+        clearTreeFire();
         flames.length = 0;
       } else if (phase === "resolved") {
         burnAmount = 0;
-        burnEmbers.length = 0;
+        clearTreeFire();
         if (outcomeRef.current !== "won") flames.length = 0;
       } else if (phase === "engulfed") {
         burnAmount = MAX_LOGO_BURN;
       }
 
       if (fxEnabled && now > nextAmb) {
-        const strikeX = W * rnd(0.12, 0.88);
-        const strikeY = H * rnd(0.7, 0.82);
-        strike(strikeX, strikeY);
+        const hitTree = pickStrike();
+        strike(hitTree.x, hitTree.y);
 
-        if (phaseRef.current === "ambient" || phaseRef.current === "burning") {
-          burnEmbers.push({ x: strikeX, y: strikeY, born: now });
-          if (burnEmbers.length > 15) burnEmbers.shift();
-        }
+        if (hitTree.tree && (phaseRef.current === "ambient" || phaseRef.current === "burning")) ignite(hitTree.tree, now);
 
         nextAmb = now + rnd(AMBIENT_STRIKE_INTERVAL_S[0], AMBIENT_STRIKE_INTERVAL_S[1]);
       }
@@ -413,6 +498,11 @@ export default function LightningHero() {
       const st = now - strikeAt;
       flash = 0.55 * (st < 0 ? 0 : st < 0.07 ? st / 0.07 : Math.exp(-(st - 0.07) * 3.2));
       const ba = st < 0.09 ? 1 : Math.exp(-(st - 0.09) * 3.5);
+
+      sceneNow = now;
+      if (fxEnabled && (phaseRef.current === "ambient" || phaseRef.current === "burning" || phaseRef.current === "engulfed")) {
+        updateFire(now, frameDt);
+      }
 
       drawScene();
       F.clearRect(0, 0, W, H);
@@ -650,7 +740,7 @@ export default function LightningHero() {
         </section>
       </div>
 
-      <canvas ref={fxRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-[61] block h-full w-full max-md:hidden" />
+      <canvas ref={fxRef} aria-hidden="true" className="pointer-events-none absolute inset-0 z-[61] block h-full w-full max-md:hidden" />
 
       {!isMobile && (phase === "collapsing" || phase === "playing" || phase === "winning" || phase === "losing") && (
         <FireGameOverlay state={fireGame} dispatch={fireGameDispatch} />
