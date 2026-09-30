@@ -20,7 +20,6 @@ const LAYER_CFG = [
   { b: 0.98, h: [0.4, 0.62], s: 0.075, lit: "#232e56", w: 3.4, k: 0.4, base: 0.02, edge: 1 },
 ];
 type LayerCfg = (typeof LAYER_CFG)[number];
-
 const inertProps = (on: boolean) => (on ? { inert: true } : {});
 
 export default function LightningHero() {
@@ -86,7 +85,6 @@ export default function LightningHero() {
     };
   }, [menuOpen]);
 
-  // Push the effects toggle into the canvas loop.
   useEffect(() => {
     toggleFxRef.current?.(fxOn);
   }, [fxOn]);
@@ -452,9 +450,9 @@ export default function LightningHero() {
 
   return (
     <header ref={heroRef} className="relative h-[100svh] min-h-[560px] overflow-hidden bg-bg">
-      <canvas ref={sceneRef} aria-hidden="true" className="absolute inset-0 block h-full w-full" />
+      <canvas ref={sceneRef} id="hero-scene" aria-hidden="true" className="absolute inset-0 block h-full w-full" />
 
-      <div className="relative flex h-full flex-col">
+      <div id="hero-stage" className="relative flex h-full flex-col">
         {/*
           Single nav for every breakpoint. On mobile the <ul> becomes a fixed full-screen panel, and the logo and
           hamburger sit above it (z-10) in the SAME elements, so nothing is duplicated and the logo cannot shift.
