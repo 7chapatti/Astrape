@@ -14,7 +14,7 @@ const body = Figtree({
 
 export const metadata: Metadata = {
   title: "Astrape",
-  description: "Custom websites that load instantly.",
+  description: "Lightning-fast custom websites for businesses that want a site nobody mistakes for a template.",
 };
 
 export const viewport: Viewport = {
