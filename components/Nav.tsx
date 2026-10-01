@@ -14,23 +14,23 @@ const LINKS = [
 export default function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLUListElement>(null);
 
-  // Close after navigating.
   useEffect(() => setOpen(false), [pathname]);
 
-  // Close if the window grows past the mobile breakpoint.
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
-    const onChange = () => {
+    const sync = () => {
+      setIsMobile(!mq.matches);
       if (mq.matches) setOpen(false);
     };
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
   }, []);
 
-  // While open: lock scroll without shifting layout, Escape closes, focus moves in.
   useEffect(() => {
     if (!open) return;
     const body = document.body;
@@ -72,7 +72,7 @@ export default function Nav() {
         <ul
           id="primary-menu"
           ref={menuRef}
-          {...(open ? {} : { inert: true })}
+          {...(isMobile && !open ? { inert: true } : {})}
           className={`m-0 flex list-none items-center p-0 md:gap-7
             max-md:fixed max-md:inset-0 max-md:z-0 max-md:flex-col max-md:justify-center max-md:gap-8 max-md:bg-bg
             max-md:transition-[opacity,visibility] max-md:duration-300 max-md:ease-out motion-reduce:max-md:transition-none
