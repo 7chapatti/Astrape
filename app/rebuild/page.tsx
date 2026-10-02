@@ -3,14 +3,14 @@ import Link from "next/link";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
-  title: "Rebuild your website — Astrape",
+  title: "Rebuild your website - Astrape",
   description:
     "Already have a site built with a template or an AI tool? See why it might be costing you visitors, and what a proper rebuild changes.",
 };
 
 const STATS = [
   { b: "75%", p: "of people judge a company's credibility mainly by how its website looks, according to Stanford's web credibility research." },
-  { b: "50ms", p: "is roughly how long it takes someone to form that first impression — long before they've read any of your content." },
+  { b: "50ms", p: "is roughly how long it takes someone to form that first impression - long before they've read any of your content." },
   { b: "72%", p: "of consumers in a 2026 Pantheon survey mistook a legitimate site for an AI scam simply because it felt slow or glitchy." },
   { b: "53%", p: "of visitors on mobile will leave a page outright if it hasn't loaded within three seconds." },
 ];
