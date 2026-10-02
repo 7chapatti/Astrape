@@ -45,7 +45,7 @@ export default function Rebuild() {
           <ul className="m-0 grid list-none grid-cols-1 gap-x-12 p-0 sm:grid-cols-2">
             {STATS.map((s, i) => (
               <li key={s.b} className={`border-line py-7 ${i ? "border-t" : ""} ${i < 2 ? "sm:border-t-0" : "sm:border-t"}`}>
-                <strong className="mb-1 block font-display text-[clamp(2.2rem,4.6vw,3.2rem)] font-extrabold tracking-tight text-acc">{s.b}</strong>
+                <strong className="mb-1 block font-display text-[clamp(2.2rem,4.6vw,3.2rem)] font-extrabold tracking-tight text-ink">{s.b}</strong>
                 <p className="m-0 max-w-[40ch] text-mute">{s.p}</p>
               </li>
             ))}
