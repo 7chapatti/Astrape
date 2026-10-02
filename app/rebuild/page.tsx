@@ -33,7 +33,7 @@ export default function Rebuild() {
             Already have a site? Here&apos;s why it might be working against you.
           </h1>
           <p className="max-w-[38rem] text-[1.1rem] text-mute">
-            If it was put together with a template or an AI builder, visitors can usually tell within seconds - and what they decide in those seconds shapes whether they trust or not.
+            If it was put together with a template or an AI builder, visitors can usually tell within seconds - and what they decide in those seconds shapes whether they trust or not. AI can get you surprisingly far. The problem is stopping there. We take AI-generated and builder-made websites and turn them into something more considered, performant and customised for your business.
           </p>
         </section>
 
@@ -62,13 +62,13 @@ export default function Rebuild() {
             <li>
               <h3 className="mb-2 text-[1.1rem] font-semibold text-mute">They look the same</h3>
               <p className="m-0 text-ink">
-                Auto-generated sites lean on the same handful of layouts and component libraries, so most of them share the same rhythm and the same stock feel - even across completely different businesses. Visitors notice, even if they can&apos;t say exactly why.
+                Auto-generated sites lean on the same handful of layouts and component libraries, so most of them share the same rhythm and the same stock feel - even across completely different businesses. Visitors notice, even if they can't say exactly why.
               </p>
             </li>
             <li>
               <h3 className="mb-2 text-[1.1rem] font-semibold text-mute">They&apos;re heavier than they need to be</h3>
               <p className="m-0 text-ink">
-                Every extra script the builder ships loads for every visitor, whether your page uses it or not. That&apos;s the weight behind the slow first load and the laggy scroll - and slowness is exactly what makes people suspicious that a site isn&apos;t real.
+                Every extra script the builder ships loads for every visitor, whether your page uses it or not. That's the weight behind the slow first load and the laggy scroll - and slowness is exactly what makes people suspicious that a site isn't real.
               </p>
             </li>
           </ul>
@@ -97,7 +97,7 @@ export default function Rebuild() {
             Want a second opinion on your site?
           </h2>
           <p className="mb-7 max-w-[32rem] text-mute">
-            Send us the link, whatever built it. We&apos;ll look it over and tell you plainly what&apos;s working, what&apos;s likely costing you visitors, and what a rebuild would actually change - no obligation either way.
+            Send us the link, whatever built it. We'll look it over and tell you what's working, what's likely costing you visitors, and what a rebuild would change - no obligation either way.
           </p>
           <Link href="/contact" className="inline-block rounded-md border border-ink bg-ink px-6 py-3 font-medium text-[#05070d] no-underline hover:border-acc hover:bg-acc">
             Contact us
