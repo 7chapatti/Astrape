@@ -25,7 +25,7 @@ export default function Projects() {
         <article className="mx-auto max-w-[1080px] px-5 sm:px-8">
           <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4">
             <h2 id="studyflow-h" className="m-0 font-display text-[clamp(1.9rem,4vw,2.6rem)] font-bold leading-tight tracking-tight">StudyFlow</h2>
-            <p className="m-0 whitespace-nowrap rounded-[5px] border border-line px-3 py-1 text-sm text-acc">Live</p>
+            <p className="m-0 whitespace-nowrap rounded-[5px] border border-line px-3 py-1 text-sm text-ink">Live</p>
           </div>
           <p className="mb-9 max-w-[52ch] text-[1.08rem] text-mute">
             A study planning app that helps university students actually stick to a schedule, instead of just writing one down and abandoning it.
