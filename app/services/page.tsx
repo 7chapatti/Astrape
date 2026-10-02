@@ -46,7 +46,7 @@ export default function Services() {
           <ul className="m-0 grid list-none grid-cols-1 gap-8 p-0 sm:grid-cols-3">
             {VISIBILITY.map((v) => (
               <li key={v.h}>
-                <h3 className="mb-2 font-display text-lg font-semibold text-acc">{v.h}</h3>
+                <h3 className="mb-2 font-display text-lg font-semibold text-ink">{v.h}</h3>
                 <p className="m-0 text-mute">{v.p}</p>
               </li>
             ))}
