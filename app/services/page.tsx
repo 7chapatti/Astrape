@@ -19,8 +19,9 @@ const ROWS = [
   { h: "Lightning-fast loading", p: "Pages load in a flash. Nothing waits on scripts your visitor doesn't need." },
   { h: "Secure by default", p: "Encrypted connections and properly handled data as standard, not something bolted on afterward." },
   { h: "Reliable hosting", p: "Your site runs on infrastructure built for uptime and speed worldwide, not a shared server that slows down under load." },
-  { h: "Room to grow", p: "Accounts, bookings, payments, dashboards — the foundation supports adding real functionality later without a rebuild." },
-  { h: "Works everywhere", p: "Polished on a phone, a tablet, and a desktop alike — not a desktop site that's merely shrunk to fit." },
+  { h: "Room to grow", p: "Accounts, bookings, payments, dashboards - the foundation supports adding real functionality later without a rebuild." },
+  { h: "Works everywhere", p: "Polished on a phone, a tablet, and a desktop alike - not a desktop site that's merely shrunk to fit." },
+  { h: "Implementing AI", p: "Make your website do more with practical AI features built directly into the experience." },
 ];
 
 export default function Services() {
