@@ -26,6 +26,10 @@ yarn-error.log*
 .env*.local
 .env
 
+# cloudflare / wrangler
+.dev.vars
+.wrangler/
+
 # vercel
 .vercel
 
