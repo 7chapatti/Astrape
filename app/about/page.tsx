@@ -18,7 +18,9 @@ export default function About() {
             About Astrape
           </h1>
           <p className="max-w-[34rem] text-[1.15rem] text-mute">
-            A small studio built around one idea: a website is often the main impression a business gets to make, so it shouldn't look like everyone else's.
+            Astrape is a small web studio focused on doing one thing well: building websites that look good and work properly.
+            We started Astrape because too many small businesses are stuck choosing between expensive agencies and generic website builders.
+            We think there should be another option.
           </p>
         </section>
 
