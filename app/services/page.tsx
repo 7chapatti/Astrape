@@ -33,7 +33,6 @@ export default function Services() {
           <h1 className="mb-4 max-w-[17ch] font-display text-[clamp(2.6rem,6vw,4.2rem)] font-extrabold leading-[1.05] tracking-tight">
             What's included, on every site we build
           </h1>
-          <p></p>
           <p className="max-w-[38rem] text-[1.12rem] text-mute">Not add-ons, not upsells - these are the standard for how we build.</p>
         </section>
 
