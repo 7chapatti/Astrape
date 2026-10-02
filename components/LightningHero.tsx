@@ -711,10 +711,10 @@ export default function LightningHero() {
           >
             <hgroup className="flex max-w-2xl flex-col items-center gap-3">
               <h2 className="m-0 text-[clamp(1.4rem,3vw,2rem)] font-semibold tracking-tight text-ink">
-                Lightning-fast custom websites.
+                Websites built around your business
               </h2>
               <p className="m-0 text-[clamp(1rem,1.2vw,1.1rem)] text-mute">
-                A web studio for businesses that want a site nobody mistakes for a template.
+                High-performance websites built around your business, not squeezed into a generic template
               </p>
             </hgroup>
 
