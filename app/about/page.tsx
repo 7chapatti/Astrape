@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
-  title: "About — Astrape",
+  title: "About - Astrape",
   description:
     "Why Astrape is named for lightning, and what the studio is trying to build for the businesses it works with.",
 };
@@ -17,7 +17,7 @@ export default function About() {
           <h1 className="mb-5 max-w-[14ch] font-display text-[clamp(2.6rem,6vw,4rem)] font-extrabold leading-[1.06] tracking-tight">
             About Astrape
           </h1>
-          <p className="max-w-[34rem] text-[1.15rem] text-mute">
+          <p className="max-w-[34rem] text-[1.15rem]">
             Astrape is a small web studio focused on doing one thing well: building websites that look good and work properly.
             We started Astrape because too many small businesses are stuck choosing between expensive agencies and generic website builders.
             We think there should be another option.
