@@ -28,20 +28,20 @@ export default function Projects() {
             <p className="m-0 whitespace-nowrap rounded-[5px] border border-line px-3 py-1 text-sm text-ink">Live</p>
           </div>
           <p className="mb-9 max-w-[52ch] text-[1.08rem] text-mute">
-            A study planning app that helps university students actually stick to a schedule, instead of just writing one down and abandoning it.
+            A study planning app that helps university students actually stick to a schedule, instead of just writing assignments down and abandoning them.
           </p>
           <dl className="m-0 grid grid-cols-1 gap-10 sm:grid-cols-2">
             <div>
               <dt className="mb-2 text-[1.05rem] font-semibold">The problem</dt>
-              <dd className="m-0 text-mute">Most study planners are just calendars. They don&apos;t account for how long a task really takes, or when a student actually has the energy to focus, so the plan falls apart within a week.</dd>
+              <dd className="m-0 text-mute">Most study planners are just calendars. They don't account for how long tasks really takes, or when a student actually has the energy to focus, so the plan falls apart quickly.</dd>
             </div>
             <div>
               <dt className="mb-2 text-[1.05rem] font-semibold">The approach</dt>
-              <dd className="m-0 text-mute">Built a scheduler that learns from a student&apos;s own patterns — when they tend to study best, how long tasks actually take them — and adjusts the plan around that, instead of a fixed template.</dd>
+              <dd className="m-0 text-mute">Built a scheduler that learns from a student's own patterns - when they tend to study best, how long tasks actually take them - and adjusts the plan around that, instead of a fixed template.</dd>
             </div>
             <div>
               <dt className="mb-2 text-[1.05rem] font-semibold">What shipped</dt>
-              <dd className="m-0 text-mute">A working billing flow for premium plans, a redesigned scheduler, and a lighter, non-AI way to estimate how long a task will take when a full recommendation isn&apos;t needed.</dd>
+              <dd className="m-0 text-mute">A working billing flow for premium plans, a redesigned scheduler, and a lighter, non-AI way to estimate how long a task will take when a full recommendation isn't needed.</dd>
             </div>
             <div>
               <dt className="mb-2 text-[1.05rem] font-semibold">Where it stands</dt>
@@ -58,14 +58,14 @@ export default function Projects() {
             <p className="m-0 whitespace-nowrap rounded-[5px] border border-line px-3 py-1 text-sm text-mute">University project</p>
           </div>
           <p className="max-w-[52ch] text-mute">
-            An encrypted file-sharing platform built for a university course, designed so that even the platform itself can&apos;t read the files being shared. It included automatic detection of unusual account activity, and went through a full UI redesign partway through to make it feel calmer and more trustworthy to use.
+            An encrypted file-sharing platform, designed so that even the platform itself can't read the files being shared. It included automatic detection of unusual account activity, and went through a full UI redesign partway through to make it feel more trustworthy.
           </p>
         </article>
       </section>
 
       <section className="border-t border-line bg-[#070b14] py-[clamp(56px,9vw,100px)]">
         <div className="mx-auto max-w-[1080px] px-5 sm:px-8">
-          <p className="m-0 text-mute">More projects go here as they&apos;re finished — including client work, once we have some.</p>
+          <p className="m-0 text-mute">More projects go here as they're finished - including client work, once we have some.</p>
         </div>
       </section>
       </main>
