@@ -26,7 +26,7 @@ export default function About() {
 
         <section className="border-t border-line py-[clamp(48px,8vw,84px)]">
           <p lang="grc" className="mb-1 font-display text-[3.2rem] font-extrabold tracking-tight text-ink">Ἀστραπή</p>
-          <p className="mb-6 text-mute">Astrapē — Greek for "lightning"</p>
+          <p className="mb-6 text-mute">Astrapē - Greek for "lightning"</p>
           <p className="m-0 leading-[1.7]">
             The name comes from the moment a strike actually happens: fast, sudden, and impossible not to notice. That's the standard we build to. A site should load instantly, and should look like nothing they&apos;ve seen from a builder before - not a slow, generic imitation of a business, but the real thing.
           </p>
