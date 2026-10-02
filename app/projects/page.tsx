@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
-  title: "Projects — Astrape",
+  title: "Projects - Astrape",
   description:
-    "A look at what Astrape has built, including StudyFlow — a live study planning app — and past project work.",
+    "A look at what Astrape has built, including StudyFlow - a live study planning app - and past project work.",
 };
 
 export default function Projects() {
@@ -14,7 +14,7 @@ export default function Projects() {
       <main id="main-content">
       <section className="mx-auto max-w-[1080px] px-5 sm:px-8 py-[clamp(80px,13vw,140px)] pb-[clamp(48px,7vw,72px)]">
           <h1 className="mb-4 max-w-[16ch] font-display text-[clamp(2.6rem,6vw,4.2rem)] font-extrabold leading-[1.05] tracking-tight">
-            Some of what we&apos;ve built
+            Some of what we've built
           </h1>
           <p className="max-w-[38rem] text-[1.12rem] text-mute">
             A mix of shipped work and earlier projects that show how we approach a build, end to end.
