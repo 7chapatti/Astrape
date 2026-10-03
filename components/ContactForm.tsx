@@ -1,13 +1,15 @@
 "use client";
+import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
-
-const loadSupabase = () => import("@/lib/supabase");
-const SUPABASE_CONFIGURED = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 const MAX = { name: 100, business: 150, email: 254, site: 300, message: 5000 } as const;
 
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+const resetTurnstile = () => (window as unknown as { turnstile?: { reset(): void } }).turnstile?.reset();
+
 export default function ContactForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [error, setError] = useState("");
   const doneHeadingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -18,31 +20,43 @@ export default function ContactForm() {
     e.preventDefault();
     if (status === "sending") return;
     const fd = new FormData(e.currentTarget);
-    if (fd.get("contact_extra")) {
-      setStatus("done");
-      return;
-    }
-    if (!SUPABASE_CONFIGURED) {
+    const text = (key: string) => String(fd.get(key) ?? "").trim();
+
+    const turnstile = text("cf-turnstile-response");
+    if (TURNSTILE_SITE_KEY && !turnstile) {
+      setError("Please wait a moment for the verification to finish, then press Send again.");
       setStatus("error");
       return;
     }
 
     setStatus("sending");
-    const text = (key: string) => String(fd.get(key) ?? "").trim();
-    const payload = {
-      name: text("name").slice(0, MAX.name),
-      business: text("business").slice(0, MAX.business) || null,
-      email: text("email").slice(0, MAX.email),
-      site: text("site").slice(0, MAX.site) || null,
-      message: text("msg").slice(0, MAX.message),
-    };
-
+    setError("");
     try {
-      const { supabase } = await loadSupabase();
-      const { error } = await supabase.from("contact_submissions").insert(payload);
-      setStatus(error ? "error" : "done");
-    } catch {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: text("name"),
+          business: text("business"),
+          email: text("email"),
+          site: text("site"),
+          message: text("msg"),
+          contact_extra: text("contact_extra"),
+          turnstile,
+        }),
+      });
+      if (res.ok) {
+        setStatus("done");
+        return;
+      }
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      setError(data?.error ?? "Something went wrong sending that — mind trying again in a moment?");
       setStatus("error");
+      resetTurnstile();
+    } catch {
+      setError("Couldn't reach the server — check your connection and try again.");
+      setStatus("error");
+      resetTurnstile();
     }
   }
 
@@ -58,7 +72,7 @@ export default function ContactForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} onFocus={() => void loadSupabase()} className="grid gap-6 pb-[clamp(64px,10vw,110px)]">
+    <form onSubmit={onSubmit} className="grid gap-6 pb-[clamp(64px,10vw,110px)]">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <Field label="Name" id="name" name="name" autoComplete="name" maxLength={MAX.name} required />
         <Field label="Business name" id="business" name="business" autoComplete="organization" maxLength={MAX.business} optional />
@@ -87,6 +101,14 @@ export default function ContactForm() {
         className="pointer-events-none absolute left-[-9999px] h-0 w-0 opacity-0"
       />
 
+      {TURNSTILE_SITE_KEY && (
+        <>
+          <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />
+          {/* Needed as the mount point Turnstile fills in. Only visible if a visitor is actually challenged. */}
+          <div className="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="dark" data-appearance="interaction-only" />
+        </>
+      )}
+
       <button
         type="submit"
         disabled={status === "sending"}
@@ -96,9 +118,7 @@ export default function ContactForm() {
       </button>
       {status === "error" && (
         <p role="alert" className="m-0 text-sm text-mute">
-          {SUPABASE_CONFIGURED
-            ? "Something went wrong sending that — mind trying again in a moment?"
-            : "This form isn't connected yet — add your Supabase keys to .env.local (see the README)."}
+          {error}
         </p>
       )}
     </form>
