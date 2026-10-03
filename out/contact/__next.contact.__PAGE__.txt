@@ -1,0 +1,21 @@
+1:"$Sreact.fragment"
+2:I[42724,["/_next/static/chunks/3fntmmi971322.js","/_next/static/chunks/3-mzi00obsmby.js"],"default"]
+3:I[33128,["/_next/static/chunks/3fntmmi971322.js","/_next/static/chunks/3-mzi00obsmby.js"],"default"]
+4:I[97367,["/_next/static/chunks/3fntmmi971322.js"],"OutletBoundary"]
+5:"$Sreact.suspense"
+9:I[97367,["/_next/static/chunks/3fntmmi971322.js"],"ViewportBoundary"]
+a:I[97367,["/_next/static/chunks/3fntmmi971322.js"],"MetadataBoundary"]
+c:I[39756,["/_next/static/chunks/3fntmmi971322.js"],"default"]
+d:I[37457,["/_next/static/chunks/3fntmmi971322.js"],"default"]
+8:X
+f:X
+f:C
+0:{"buildId":"Uxa3_2ddLxGV_fgkFSuaS","data":[{"rsc":["$","$1","c",{"children":[[["$","$L2",null,{}],["$","main",null,{"id":"main-content","children":["$","div",null,{"className":"mx-auto max-w-[760px] px-5 sm:px-8","children":[["$","section",null,{"className":"py-[clamp(64px,10vw,110px)] pb-[clamp(40px,6vw,64px)]","children":[["$","h1",null,{"className":"mb-4 max-w-[15ch] font-display text-[clamp(2.4rem,5.6vw,3.6rem)] font-extrabold leading-[1.06] tracking-tight","children":"Tell us what you're building"}],["$","p",null,{"className":"max-w-[36rem] text-[1.1rem]","children":"A few details to get started. We usually reply within one working day."}]]}],["$","$L3",null,{}]]}]}]],[["$","script","script-0",{"src":"/_next/static/chunks/3-mzi00obsmby.js","async":true}]],["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":"$@7","staleTime":"$8","varyParams":null},{"rsc":["$","$1","h",{"children":[null,["$","$L9",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1, viewport-fit=cover"}],["$","meta","2",{"name":"theme-color","content":"#04060b"}]]}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$5",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Contact - Astrape"}],["$","meta","1",{"name":"description","content":"Tell us what you're building. We reply within one working day."}]]}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"isPartial":"$@b","staleTime":"$8","varyParams":null},{"rsc":["$","$1","c",{"children":[null,["$","$Lc",null,{"parallelRouterKey":"children","template":["$","$Ld",null,{}]}]]}],"isPartial":"$@e","staleTime":"$8","varyParams":"$f"}],"isUpgradeableISRFallback":false,"a":"$@10","rootVaryParams":null,"needsRuntimeRequest":"$@11"}
+6:null
+11:true
+8:300
+8:C
+10:0
+b:"$undefined"
+e:"$undefined"
+7:"$undefined"

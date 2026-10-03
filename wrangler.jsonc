@@ -1,0 +1,27 @@
+{
+  // Cloudflare Worker config. Deploys the static site (./out) plus the contact-form Worker.
+  "name": "astrape",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+
+  "assets": {
+    "directory": "./out",
+    "binding": "ASSETS",
+    // Only /api/* runs Worker code. Page loads are served straight from the static files.
+    "run_worker_first": ["/api/*"],
+    // Unknown URLs get the site's own 404 page (out/404.html).
+    "not_found_handling": "404-page"
+  },
+
+  // Keep variables and secrets you set in the Cloudflare dashboard when deploying from here.
+  "keep_vars": true,
+
+  "observability": { "enabled": true }
+
+  // Custom domains. Easiest: add them in the dashboard (Worker -> Settings -> Domains & Routes).
+  // Or uncomment once astrape.co.uk is a zone in your Cloudflare account:
+  // "routes": [
+  //   { "pattern": "astrape.co.uk", "custom_domain": true },
+  //   { "pattern": "www.astrape.co.uk", "custom_domain": true }
+  // ]
+}

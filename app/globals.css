@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  background: #04060b;
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  background: #04060b;
+  color: #e8edfb;
+}
+
+:focus-visible {
+  outline: 2px solid #7aa2ff;
+  outline-offset: 3px;
+}
