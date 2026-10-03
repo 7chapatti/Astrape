@@ -1,8 +1,0 @@
-RESEND_API_KEY=re_xxxxxxxxxxxx
-
-CONTACT_TO_EMAIL=you@yourdomain.com
-
-CONTACT_FROM_EMAIL=Astrape <forms@astrape.co.uk>
-
-TURNSTILE_SECRET_KEY=
-NEXT_PUBLIC_TURNSTILE_SITE_KEY
