@@ -1,13 +1,8 @@
-# Local secrets for `npm run cf:dev` (wrangler). Copy to .dev.vars. Never commit .dev.vars.
-# On the live site, set these in the Cloudflare dashboard instead:
-#   Workers & Pages -> astrape -> Settings -> Variables and Secrets
-
 RESEND_API_KEY=re_xxxxxxxxxxxx
-# Where enquiries are delivered. Comma-separate to send to more than one address.
-CONTACT_TO_EMAIL=you@yourdomain.com
-# Leave this out until astrape.co.uk is verified in Resend. Until then Resend's test sender is used,
-# and it can only deliver to the address your Resend account was created with.
-# CONTACT_FROM_EMAIL=Astrape <forms@astrape.co.uk>
 
-# Optional bot check (Cloudflare Turnstile). Needs the matching NEXT_PUBLIC_TURNSTILE_SITE_KEY at build time.
-# TURNSTILE_SECRET_KEY=
+CONTACT_TO_EMAIL=you@yourdomain.com
+
+CONTACT_FROM_EMAIL=Astrape <forms@astrape.co.uk>
+
+TURNSTILE_SECRET_KEY=
+NEXT_PUBLIC_TURNSTILE_SITE_KEY
